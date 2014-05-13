@@ -418,9 +418,15 @@ function update_all($feed_id, array $items, $grabber = false)
         if ($item->id && $item->url) {
 
             \PicoFeed\Logging::log('Item parsed correctly');
-
-            // Insert only new item
-            if ($db->table('items')->eq('id', $item->id)->count() !== 1) {
+            
+            // get item record in database, if any
+            $itemrec = $db
+                ->table('items')
+                ->columns('enclosure')
+                ->eq('id', $item->id)->findOne();
+                        
+            // Insert a new item
+            if ($itemrec == null) {
 
                 \PicoFeed\Logging::log('Item added to the database');
 
@@ -441,6 +447,20 @@ function update_all($feed_id, array $items, $grabber = false)
                     'enclosure_type' => isset($item->enclosure_type) ? $item->enclosure_type : null,
                     'language' => $item->language,
                 ));
+            }
+            // update item enclosure if enclosure has now been set.
+            // Some sites add enclosures later without changinging the item id. e.g. NPR, ScientificAmerican
+            elseif (isset($item->enclosure) && $item->enclosure && !$itemrec['enclosure']) {
+
+                \PicoFeed\Logging::log('Updated Item media entry the database');
+                // \PicoFeed\Logging::log('$item->enclosure: '.$item->enclosure?'true':'false');
+                // \PicoFeed\Logging::log('!$itemrec[enclosure]: '.(!$itemrec['enclosure'])?'true':'false');
+
+                $db->table('items')->eq('id', $item->id)->save(array(
+                    'status' => 'unread',
+                    'enclosure' => $item->enclosure,
+                    'enclosure_type' => isset($item->enclosure_type) ? $item->enclosure_type : null,
+                    ));
             }
             else {
                 \PicoFeed\Logging::log('Item already in the database');
