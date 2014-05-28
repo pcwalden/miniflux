@@ -9,7 +9,7 @@ use PicoFarad\Template;
 // Called before each action
 Router\before(function($action) {
 
-    Session\open(dirname($_SERVER['PHP_SELF']), SESSION_SAVE_PATH);
+    Session\open(BASE_URL_DIRECTORY, SESSION_SAVE_PATH);
 
     // Select another database
     if (! empty($_SESSION['database'])) {
@@ -20,7 +20,13 @@ Router\before(function($action) {
     $ignore_actions = array('login', 'google-auth', 'google-redirect-auth', 'mozilla-auth', 'bookmark-feed', 'select-db');
 
     if (! isset($_SESSION['user']) && ! in_array($action, $ignore_actions)) {
-        Response\redirect('?action=login');
+
+        if (! Model\RememberMe\authenticate()) {
+            Response\redirect('?action=login');
+        }
+    }
+    else if (Model\RememberMe\has_cookie()) {
+        Model\RememberMe\refresh();
     }
 
     // Load translations
@@ -31,7 +37,7 @@ Router\before(function($action) {
     date_default_timezone_set(Model\Config\get('timezone') ?: 'UTC');
 
     // HTTP secure headers
-    $frame_src = \PicoFeed\Filter::$iframe_whitelist;
+    $frame_src = Model\Config\get_iframe_whitelist();;
     $frame_src[] = 'https://login.persona.org';
 
     Response\csp(array(

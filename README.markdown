@@ -107,6 +107,7 @@ People who sent a pull-request, report a bug, make a new theme or share a super 
 - Ing. Jan Kaláb: https://github.com/Pitel
 - Itoine: https://github.com/itoine
 - James Scott-Brown: https://github.com/jamesscottbrown
+- James Barwell: https://github.com/JamesBarwell
 - Luca Marra: https://github.com/facciocose
 - Maxime: https://github.com/EpocDotFr
 - MonsieurPaulLeBoulanger: https://github.com/MonsieurPaulLeBoulanger
@@ -117,6 +118,7 @@ People who sent a pull-request, report a bug, make a new theme or share a super 
 - Silvus: https://github.com/Silvus
 - Skasi7: https://github.com/skasi7
 - Thiriot Christophe: https://github.com/doubleface
+- Tobi: https://github.com/tobir
 - Vincent Ozanam
 - Ygbillet: https://github.com/ygbillet
 

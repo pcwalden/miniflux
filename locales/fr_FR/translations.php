@@ -144,7 +144,7 @@ return array(
     'original link' => 'lien original',
     'mark as read' => 'marquer comme lu',
     'No history' => 'Aucun historique',
-    'mark as unread' => 'non lu',
+    'mark as unread' => 'marquer comme non lu',
     'History' => 'Historique',
     'flush all items' => 'supprimer tous les éléments',
     'Item not found' => 'Élément introuvable',
@@ -223,4 +223,6 @@ return array(
     'Unable to create the new database.' => 'Impossible créer la nouvelle base de données.',
     'Add a new database (new user)' => 'Ajouter une nouvelle base de données (nouvel utilisateur)',
     'Create' => 'Créer',
+    'Unknown' => 'Inconnu',
+    'Remember Me' => 'Connexion automatique',
 );

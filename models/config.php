@@ -2,29 +2,52 @@
 
 namespace Model\Config;
 
-require_once __DIR__.'/../vendor/SimpleValidator/Validator.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Base.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Required.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Unique.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/MaxLength.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/MinLength.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Integer.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Equals.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Integer.php';
-
 use SimpleValidator\Validator;
 use SimpleValidator\Validators;
 use PicoDb\Database;
+use PicoFeed\Config as ReaderConfig;
+use PicoFeed\Logging;
 
-const DB_VERSION          = 24;
-const HTTP_USERAGENT      = 'Miniflux - http://miniflux.net';
-const HTTP_FAKE_USERAGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36';
+const DB_VERSION = 25;
+const HTTP_USER_AGENT = 'Miniflux (http://miniflux.net)';
 
+// Get PicoFeed config
+function get_reader_config()
+{
+    $config = new ReaderConfig;
+    $config->setTimezone(get('timezone'));
+
+    $config->setClientTimeout(HTTP_TIMEOUT);
+    $config->setClientUserAgent(HTTP_USER_AGENT);
+    $config->setGrabberUserAgent(HTTP_USER_AGENT);
+
+    $config->setProxyHostname(PROXY_HOSTNAME);
+    $config->setProxyPort(PROXY_PORT);
+    $config->setProxyUsername(PROXY_USERNAME);
+    $config->setProxyPassword(PROXY_PASSWORD);
+
+    $config->setFilterIframeWhitelist(get_iframe_whitelist());
+
+    return $config;
+}
+
+function get_iframe_whitelist()
+{
+    return array(
+        '//www.youtube.com',
+        'http://www.youtube.com',
+        'https://www.youtube.com',
+        'http://player.vimeo.com',
+        'https://player.vimeo.com',
+        'http://www.dailymotion.com',
+        'https://www.dailymotion.com',
+    );
+}
 
 // Send a debug message to the console
 function debug($line)
 {
-    \PicoFeed\Logging::log($line);
+    Logging::setMessage($line);
     write_debug();
 }
 
@@ -32,14 +55,7 @@ function debug($line)
 function write_debug()
 {
     if (DEBUG) {
-
-        $data = '';
-
-        foreach (\PicoFeed\Logging::$messages as $line) {
-            $data .= $line.PHP_EOL;
-        }
-
-        file_put_contents(DEBUG_FILENAME, $data);
+        file_put_contents(DEBUG_FILENAME, implode(PHP_EOL, Logging::getMessages()));
     }
 }
 
@@ -280,4 +296,49 @@ function save(array $values)
     }
 
     return Database::get('db')->table('config')->update($values);
+}
+
+// Get the user agent of the connected user
+function get_user_agent()
+{
+    return empty($_SERVER['HTTP_USER_AGENT']) ? t('Unknown') : $_SERVER['HTTP_USER_AGENT'];
+}
+
+// Get the real IP address of the connected user
+function get_ip_address($only_public = false)
+{
+    $keys = array(
+        'HTTP_CLIENT_IP',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_X_FORWARDED',
+        'HTTP_X_CLUSTER_CLIENT_IP',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_FORWARDED',
+        'REMOTE_ADDR'
+    );
+
+    foreach ($keys as $key) {
+
+        if (isset($_SERVER[$key])) {
+
+            foreach (explode(',', $_SERVER[$key]) as $ip_address) {
+
+                $ip_address = trim($ip_address);
+
+                if ($only_public) {
+
+                    // Return only public IP address
+                    if (filter_var($ip_address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip_address;
+                    }
+                }
+                else {
+
+                    return $ip_address;
+                }
+            }
+        }
+    }
+
+    return t('Unknown');
 }

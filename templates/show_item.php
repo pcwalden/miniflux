@@ -69,6 +69,13 @@
                 <a href="<?= $item['enclosure'] ?>" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
             </li>
             <?php endif ?>
+            <li>
+                <a
+                    href="?action=mark-item-unread&amp;id=<?= $item['id'] ?>&amp;redirect=unread"
+                >
+                    <?= t('mark as unread') ?>
+                </a>
+            </li>
             <li class="hide-mobile">
                 <span id="download-item"
                       data-item-id="<?= $item['id'] ?>"
@@ -83,9 +90,9 @@
         </ul>
 
         <div id="item-content" <?= Helper\isRTL($item['language']) ? 'dir="rtl"' : '' ?>>
-            <?= $item['content'] ?>
 
             <?php if ($item['enclosure']): ?>
+            <div id="item-content-enclosure">
                 <?php if (strpos($item['enclosure_type'], 'audio') !== false): ?>
                     <audio controls>
                         <source src="<?= $item['enclosure'] ?>" type="<?= $item['enclosure_type'] ?>">
@@ -94,8 +101,13 @@
                     <video controls>
                         <source src="<?= $item['enclosure'] ?>" type="<?= $item['enclosure_type'] ?>">
                     </video>
+                <?php elseif (strpos($item['enclosure_type'], 'image') !== false): ?>
+                    <img src="<?= $item['enclosure'] ?>" alt="enclosure"/>
                 <?php endif ?>
+            </div>
             <?php endif ?>
+
+            <?= $item['content'] ?>
         </div>
 
         <?php if (isset($item_nav)): ?>

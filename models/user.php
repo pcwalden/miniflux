@@ -2,14 +2,12 @@
 
 namespace Model\User;
 
-require_once __DIR__.'/../vendor/SimpleValidator/Validator.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Base.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/Required.php';
-require_once __DIR__.'/../vendor/SimpleValidator/Validators/MaxLength.php';
-
 use SimpleValidator\Validator;
 use SimpleValidator\Validators;
 use PicoDb\Database;
+use Model\Config;
+use Model\RememberMe;
+use Model\Database as DatabaseModel;
 
 // Get a user by username
 function get($username)
@@ -42,7 +40,13 @@ function validate_login(array $values)
             unset($user['password']);
 
             $_SESSION['user'] = $user;
-            $_SESSION['config'] = \Model\Config\get_all();
+            $_SESSION['config'] = Config\get_all();
+
+            // Setup the remember me feature
+            if (! empty($values['remember_me'])) {
+                $credentials = RememberMe\create(DatabaseModel\select(), $values['username'], Config\get_ip_address(), Config\get_user_agent());
+                RememberMe\write_cookie($credentials['token'], $credentials['sequence'], $credentials['expiration']);
+            }
         }
         else {
 
