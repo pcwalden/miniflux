@@ -188,10 +188,9 @@ abstract class Client
                     $this->encoding = isset($result[1]) ? $result[1] : '';
                 }
 
-                if (($this->etag && $this->etag === $etag) || ($this->last_modified && $last_modified === $this->last_modified)) {
+                if (($this->etag && $this->etag === $etag) && ($this->last_modified && $last_modified === $this->last_modified)) {
                     $this->is_modified = false;
                 }
-
                 $this->etag = $etag;
                 $this->last_modified = $last_modified;
             }
