@@ -4,6 +4,9 @@ namespace PicoDb;
 
 class Table
 {
+    const SORT_ASC = 'ASC';
+    const SORT_DESC = 'DESC';
+
     private $table_name = '';
     private $sql_limit = '';
     private $sql_offset = '';
@@ -41,7 +44,11 @@ class Table
         }
     }
 
-
+    /**
+     * Update
+     *
+     * Note: Do not use `rowCount()` the behaviour is different across drivers
+     */
     public function update(array $data)
     {
         $columns = array();
@@ -67,12 +74,7 @@ class Table
 
         $result = $this->db->execute($sql, $values);
 
-        if ($result !== false && $result->rowCount() > 0) {
-
-            return true;
-        }
-
-        return false;
+        return $result !== false;
     }
 
 
@@ -104,7 +106,9 @@ class Table
             $this->conditions()
         );
 
-        return false !== $this->db->execute($sql, $this->values);
+        $result = $this->db->execute($sql, $this->values);
+
+        return $result !== false && $result->rowCount() > 0;
     }
 
 
@@ -260,10 +264,10 @@ class Table
     }
 
 
-    public function orderBy($column, $order = 'ASC')
+    public function orderBy($column, $order = self::SORT_ASC)
     {
         $order = strtoupper($order);
-        $order = $order === 'ASC' || $order === 'DESC' ? $order : 'ASC';
+        $order = $order === self::SORT_ASC || $order === self::SORT_DESC ? $order : self::SORT_ASC;
 
         if ($this->sql_order === '') {
             $this->sql_order = ' ORDER BY '.$this->db->escapeIdentifier($column).' '.$order;
@@ -279,10 +283,10 @@ class Table
     public function asc($column)
     {
         if ($this->sql_order === '') {
-            $this->sql_order = ' ORDER BY '.$this->db->escapeIdentifier($column).' ASC';
+            $this->sql_order = ' ORDER BY '.$this->db->escapeIdentifier($column).' '.self::SORT_ASC;
         }
         else {
-            $this->sql_order .= ', '.$this->db->escapeIdentifier($column).' ASC';
+            $this->sql_order .= ', '.$this->db->escapeIdentifier($column).' '.self::SORT_ASC;
         }
 
         return $this;
@@ -292,10 +296,10 @@ class Table
     public function desc($column)
     {
         if ($this->sql_order === '') {
-            $this->sql_order = ' ORDER BY '.$this->db->escapeIdentifier($column).' DESC';
+            $this->sql_order = ' ORDER BY '.$this->db->escapeIdentifier($column).' '.self::SORT_DESC;
         }
         else {
-            $this->sql_order .= ', '.$this->db->escapeIdentifier($column).' DESC';
+            $this->sql_order .= ', '.$this->db->escapeIdentifier($column).' '.self::SORT_DESC;
         }
 
         return $this;
@@ -375,6 +379,12 @@ class Table
             case 'equal':
             case 'equals':
                 $sql = sprintf('%s = ?', $this->db->escapeIdentifier($column));
+                break;
+
+            case 'neq':
+            case 'notequal':
+            case 'notequals':
+                $sql = sprintf('%s != ?', $this->db->escapeIdentifier($column));
                 break;
 
             case 'gt':
