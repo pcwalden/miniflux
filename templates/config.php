@@ -1,8 +1,16 @@
 <div class="page-header">
     <h2><?= t('Preferences') ?></h2>
+    <ul>
+        <li><a href="?action=about"><?= t('about') ?></a></li>
+        <li><a href="?action=help"><?= t('help') ?></a></li>
+        <li><a href="?action=database"><?= t('database') ?></a></li>
+        <li><a href="?action=api"><?= t('api') ?></a></li>
+    </ul>
 </div>
 <section>
 <form method="post" action="?action=config" autocomplete="off">
+
+    <?= Helper\form_hidden('csrf', $values) ?>
 
     <?= Helper\form_label(t('Username'), 'username') ?>
     <?= Helper\form_text('username', $values, $errors, array('required')) ?><br/>
@@ -44,86 +52,19 @@
         <?= Helper\form_text('auto_update_url', $values, $errors, array('required')) ?><br/>
     <?php endif ?>
 
-    <ul>
-        <li>
-            <?php if ($values['auth_google_token']): ?>
-                <?= t('Your Google Account is linked to Miniflux') ?>, <a href="?action=unlink-account-provider&amp;type=google"><?= t('remove') ?></a>
-            <?php else: ?>
-                <a href="?action=google-redirect-link"><?= t('Link Miniflux to my Google account') ?></a>
-            <?php endif ?>
-        </li>
-        <li>
-            <?php if ($values['auth_mozilla_token']): ?>
-                <?= t('Your Mozilla Persona Account is linked to Miniflux') ?>, <a href="?action=unlink-account-provider&amp;type=mozilla"><?= t('remove') ?></a>
-            <?php else: ?>
-                <a href="#" data-action="mozilla-link"><?= t('Link Miniflux to my Mozilla Persona account') ?></a>
-            <?php endif ?>
-        </li>
-    </ul>
-
     <div class="form-actions">
         <input type="submit" value="<?= t('Save') ?>" class="btn btn-blue"/>
     </div>
 </form>
 </section>
 
+<?php if (ENABLE_AUTO_UPDATE): ?>
 <div class="page-section">
-    <h2><?= t('More information') ?></h2>
+    <h2><?= t('Advanced') ?></h2>
 </div>
-<section>
-    <div class="alert alert-normal">
-        <h3 id="fever"><?= t('Fever API') ?></h3>
-        <ul>
-            <li><?= t('Link:') ?> <strong><?= Helper\get_current_base_url().'fever/' ?></strong></li>
-            <li><?= t('Username:') ?> <strong><?= Helper\escape($values['username']) ?></strong></li>
-            <li><?= t('Password:') ?> <strong><?= Helper\escape($values['fever_token']) ?></strong></li>
-        </ul>
-    </div>
-    <div class="alert alert-normal">
-        <h3 id="bookmarks"><?= t('Bookmarks') ?></h3>
-        <ul>
-            <li>
-                <?= t('Bookmarklet:') ?>
-                <a href="javascript:location.href='<?= Helper\get_current_base_url() ?>?action=subscribe&amp;token=<?= urlencode($values['bookmarklet_token']) ?>&amp;url='+encodeURIComponent(location.href)"><?= t('Subscribe with Miniflux') ?></a> (<?= t('Drag and drop this link to your bookmarks') ?>)
-            <li>
-                <a href="<?= Helper\get_current_base_url().'?action=bookmark-feed&amp;token='.urlencode($values['feed_token']) ?>" target="_blank"><?= t('Bookmark RSS Feed') ?></a>
-            </li>
-        </ul>
-    </div>
-    <div class="alert alert-normal">
-        <h3 id="api"><?= t('API') ?></h3>
-        <ul>
-            <li><?= t('API endpoint:') ?> <strong><?= Helper\get_current_base_url().'jsonrpc.php' ?></strong></li>
-            <li><?= t('API username:') ?> <strong><?= Helper\escape($values['username']) ?></strong></li>
-            <li><?= t('API token:') ?> <strong><?= Helper\escape($values['api_token']) ?></strong></li>
-            <li><a href="?action=generate-tokens"><?= t('Generate new tokens') ?></a></li>
-        </ul>
-    </div>
-    <div class="alert alert-normal">
-        <h3><?= t('Database') ?></h3>
-        <ul>
-            <li><?= t('Database size:') ?> <strong><?= Helper\format_bytes($db_size) ?></strong></li>
-            <li><a href="?action=optimize-db"><?= t('Optimize the database') ?></a> <?= t('(VACUUM command)') ?></li>
-            <li><a href="?action=download-db"><?= t('Download the entire database') ?></a> <?= t('(Gzip compressed Sqlite file)') ?></li>
-            <?php if (ENABLE_MULTIPLE_DB): ?>
-            <li>
-                <a href="?action=new-db"><?= t('Add a new database (new user)') ?></a>
-            </li>
-            <?php endif ?>
-        </ul>
-    </div>
-    <?= \PicoFarad\Template\load('keyboard_shortcuts') ?>
-    <div class="alert alert-normal">
-        <h3><?= t('About') ?></h3>
-        <ul>
-            <li><?= t('Miniflux version:') ?> <strong><?= APP_VERSION ?></strong></li>
-            <li><?= t('Official website:') ?> <a href="http://miniflux.net" rel="noreferrer" target="_blank">http://miniflux.net</a></li>
-            <?php if (ENABLE_AUTO_UPDATE): ?>
-                <li><a href="?action=auto-update"><?= t('Update Miniflux') ?></a> (<?= t('Don\'t forget to backup your database') ?>)</li>
-            <?php endif ?>
-            <li><a href="?action=console"><?= t('Console') ?></a></li>
-        </ul>
-    </div>
+<section class="alert alert-error">
+<ul>
+    <li><a href="?action=confirm-auto-update"><?= t('Update Miniflux') ?></a> (<?= t('Don\'t forget to backup your database') ?>)</li>
+</ul>
 </section>
-
-<script type="text/javascript" src="assets/js/persona.js" async></script>
+<?php endif ?>

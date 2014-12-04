@@ -128,38 +128,27 @@ route('items', function() {
 
     if ($response['auth']) {
 
-        $offset = 0;
-        $direction = 'ASC';
+        $query = Database::get('db')
+                        ->table('items')
+                        ->limit(50)
+                        ->columns(
+                            'rowid',
+                            'feed_id',
+                            'title',
+                            'author',
+                            'content',
+                            'url',
+                            'updated',
+                            'status',
+                            'bookmark'
+                        );
 
         if (isset($_GET['since_id']) && is_numeric($_GET['since_id'])) {
 
-            $offset = $_GET['since_id'];
-            $direction = 'ASC';
+            $items = $query->gt('rowid', $_GET['since_id'])
+                           ->asc('rowid');
         }
-        else if (isset($_GET['max_id']) && is_numeric($_GET['max_id'])) {
-
-            $offset = $_GET['max_id'];
-            $direction = 'DESC';
-        }
-
-        $query = Database::get('db')
-                    ->table('items')
-                    ->columns(
-                        'rowid',
-                        'feed_id',
-                        'title',
-                        'author',
-                        'content',
-                        'url',
-                        'updated',
-                        'status',
-                        'bookmark'
-                    )
-                    ->orderby('rowid', $direction)
-                    ->offset($offset)
-                    ->limit(50);
-
-        if (! empty($_GET['with_ids'])) {
+        else if (! empty($_GET['with_ids'])) {
             $query->in('rowid', explode(',', $_GET['with_ids']));
         }
 
@@ -302,7 +291,8 @@ foreach (array_keys($_GET) as $action) {
     route($action);
 }
 
-if (! empty($_POST['mark']) && ! empty($_POST['as']) && ! empty($_POST['id'])) {
+if (! empty($_POST['mark']) && ! empty($_POST['as'])
+    && ! is_null(filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT, array('options' => array('default' => NULL,'min_range' => -1)))) ){
 
     if ($_POST['mark'] === 'item') {
         route('write_items');

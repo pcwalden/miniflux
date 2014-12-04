@@ -85,7 +85,7 @@ function get_languages()
 function get_themes()
 {
     $themes = array(
-        'original' => t('Original')
+        'original' => t('Default')
     );
 
     if (file_exists(THEME_DIRECTORY)) {
@@ -150,10 +150,47 @@ function get_paging_options()
 function get_nothing_to_read_redirections()
 {
     return array(
-        'feeds' => t('Subscription page'),
-        'history' => t('History page'),
-        'bookmarks' => t('Bookmark page'),
+        'feeds' => t('Subscriptions'),
+        'history' => t('History'),
+        'bookmarks' => t('Bookmarks'),
     );
+}
+
+// Create a CSRF token
+function generate_csrf()
+{
+    if (empty($_SESSION['csrf'])) {
+        $_SESSION['csrf'] = array();
+    }
+
+    $token = generate_token();
+    $_SESSION['csrf'][$token] = true;
+
+    return $token;
+}
+
+// Check CSRF token (form values)
+function check_csrf_values(array &$values)
+{
+    if (empty($values['csrf']) || ! isset($_SESSION['csrf'][$values['csrf']])) {
+        $values = array();
+    }
+    else {
+
+        unset($_SESSION['csrf'][$values['csrf']]);
+        unset($values['csrf']);
+    }
+}
+
+// Check CSRF token
+function check_csrf($token)
+{
+    if (isset($_SESSION['csrf'][$token])) {
+        unset($_SESSION['csrf'][$token]);
+        return true;
+    }
+
+    return false;
 }
 
 // Generate a token from /dev/urandom or with uniqid() if open_basedir is enabled
@@ -241,8 +278,6 @@ function get_all()
             'feed_token',
             'fever_token',
             'bookmarklet_token',
-            'auth_google_token',
-            'auth_mozilla_token',
             'items_sorting_direction',
             'items_display_mode',
             'redirect_nothing_to_read',
