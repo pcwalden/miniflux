@@ -54,21 +54,24 @@ Requirements
 
 - Recent version of libxml2 >= 2.7.x (version 2.6.32 on Debian Lenny is not supported anymore)
 - PHP >= 5.3.3
-- PHP XML extensions (SimpleXML, DOM...)
+- PHP XML extensions (SimpleXML and DOM)
 - PHP Sqlite extension
 - cURL extension for PHP or Stream Context with `allow_url_fopen=On`
 
 Documentation
 -------------
 
-- [Installation and updates](docs/installation-and-updates.markdown)
+- [Installation](docs/installation.markdown)
+- [Upgrade to a new version](docs/upgrade.markdown)
 - [Cronjob](docs/cronjob.markdown)
 - [Advanced configuration](docs/config.markdown)
 - [Full article download](docs/full-article-download.markdown)
 - [Multiple users](docs/multiple-users.markdown)
 - [Translations](docs/translations.markdown)
 - [Themes](docs/themes.markdown)
-- [API documentation](http://miniflux.net/api.html)
+- [Json-RPC API](docs/json-rpc-api.markdown)
+- [Fever API](docs/fever.markdown)
+- [Run Miniflux with Docker](docs/docker.markdown)
 - [FAQ](docs/faq.markdown)
 
 Todo and known bugs
@@ -90,40 +93,41 @@ Original author: [Frédéric Guillot](http://fredericguillot.com/)
 
 People who sent a pull-request, report a bug, make a new theme or share a super cool idea:
 
-- André Kelpe: https://github.com/fs111
-- Augustin Lacour: https://github.com/gugu4-9
-- Ayodio: https://github.com/ayodio
-- Bjauy: https://github.com/bjauy
-- Bohwaz: https://github.com/bohwaz
-- Chase Arnold: https://github.com/chase4926
-- Chris Lemonier: https://github.com/chrislemonier
-- Delehef: https://github.com/delehef
-- Derjus: https://github.com/derjus
-- Eauland: https://github.com/eauland
-- Félix: https://github.com/dysosmus
-- Geriel Castro: https://github.com/GerielCastro
-- Hika0: https://github.com/hika0
-- Horsely: https://github.com/horsley
-- Ing. Jan Kaláb: https://github.com/Pitel
-- Itoine: https://github.com/itoine
-- James Scott-Brown: https://github.com/jamesscottbrown
-- James Barwell: https://github.com/JamesBarwell
-- Julian Oster: https://github.com/jlnostr
-- Jarek: https://github.com/jarek
-- Luca Marra: https://github.com/facciocose
-- Mathias Kresin: https://github.com/mkresin
-- Maxime: https://github.com/EpocDotFr
-- Meradoou: https://github.com/meradoou
-- MonsieurPaulLeBoulanger: https://github.com/MonsieurPaulLeBoulanger
-- Necku: https://github.com/Necku
-- Nicolas Dewaele: http://adminrezo.fr/
-- Pcwalden: https://github.com/pcwalden
-- Pitel: https://github.com/Pitel
-- Silvus: https://github.com/Silvus
-- Skasi7: https://github.com/skasi7
-- Thiriot Christophe: https://github.com/doubleface
-- Tobi: https://github.com/tobir
+- [André Kelpe](https://github.com/fs111)
+- [Augustin Lacour](https://github.com/gugu4-9)
+- [Ayodio](https://github.com/ayodio)
+- [Bjauy](https://github.com/bjauy)
+- [Bohwaz](https://github.com/bohwaz)
+- [Chase Arnold](https://github.com/chase4926)
+- [Chris Lemonier](https://github.com/chrislemonier)
+- [Delehef](https://github.com/delehef)
+- [Derjus](https://github.com/derjus)
+- [Eauland](https://github.com/eauland)
+- [Félix](https://github.com/dysosmus)
+- [Geriel Castro](https://github.com/GerielCastro)
+- [Hika0](https://github.com/hika0)
+- [Horsely](https://github.com/horsley)
+- [Ing. Jan Kaláb](https://github.com/Pitel)
+- [Itoine](https://github.com/itoine)
+- [James Scott-Brown](https://github.com/jamesscottbrown)
+- [James Barwell](https://github.com/JamesBarwell)
+- [Julian Oster](https://github.com/jlnostr)
+- [Jarek](https://github.com/jarek)
+- [Luca Marra](https://github.com/facciocose)
+- [Martin Simon](https://github.com/c0ding)
+- [Mathias Kresin](https://github.com/mkresin)
+- [Maxime](https://github.com/EpocDotFr)
+- [Meradoou](https://github.com/meradoou)
+- [MonsieurPaulLeBoulanger](https://github.com/MonsieurPaulLeBoulanger)
+- [Necku](https://github.com/Necku)
+- [Nicolas Dewaele](http://adminrezo.fr/)
+- [Pcwalden](https://github.com/pcwalden)
+- [Pitel](https://github.com/Pitel)
+- [Silvus](https://github.com/Silvus)
+- [Skasi7](https://github.com/skasi7)
+- [Thiriot Christophe](https://github.com/doubleface)
+- [Tobi](https://github.com/tobir)
 - Vincent Ozanam
-- Ygbillet: https://github.com/ygbillet
+- [Ygbillet](https://github.com/ygbillet)
 
 Many people also sent bug reports and feature requests.

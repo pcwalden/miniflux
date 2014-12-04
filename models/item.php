@@ -8,7 +8,6 @@ use PicoFeed\Logging;
 use PicoFeed\Grabber;
 use PicoFeed\Client;
 use PicoFeed\Filter;
-use Readability;
 
 // Get all items without filtering
 function get_everything()
@@ -28,7 +27,8 @@ function get_everything()
             'items.content',
             'items.language',
             'feeds.site_url',
-            'feeds.title AS feed_title'
+            'feeds.title AS feed_title',
+            'feeds.rtl'
         )
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('read', 'unread'))
@@ -54,7 +54,8 @@ function get_everything_since($timestamp)
             'items.content',
             'items.language',
             'feeds.site_url',
-            'feeds.title AS feed_title'
+            'feeds.title AS feed_title',
+            'feeds.rtl'
         )
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('read', 'unread'))
@@ -91,7 +92,8 @@ function get_all($status, $offset = null, $limit = null, $order_column = 'update
             'items.content',
             'items.language',
             'feeds.site_url',
-            'feeds.title AS feed_title'
+            'feeds.title AS feed_title',
+            'feeds.rtl'
         )
         ->join('feeds', 'id', 'feed_id')
         ->eq('status', $status)
@@ -138,7 +140,8 @@ function get_bookmarks($offset = null, $limit = null)
             'items.feed_id',
             'items.language',
             'feeds.site_url',
-            'feeds.title AS feed_title'
+            'feeds.title AS feed_title',
+            'feeds.rtl'
         )
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('read', 'unread'))
@@ -176,7 +179,8 @@ function get_all_by_feed($feed_id, $offset = null, $limit = null, $order_column 
             'items.content',
             'items.bookmark',
             'items.language',
-            'feeds.site_url'
+            'feeds.site_url',
+            'feeds.rtl'
         )
         ->join('feeds', 'id', 'feed_id')
         ->in('status', array('unread', 'read'))
@@ -549,12 +553,9 @@ function download_content_url($url)
     if ($grabber->parse()) {
         $content = $grabber->getcontent();
     }
-    else {
-        $content = download_content_readability($grabber->getRawContent(), $url);
-    }
 
     if (! empty($content)) {
-        $filter = new Filter($content, $url);
+        $filter = Filter::html($content, $url);
         $filter->setConfig(Config\get_reader_config());
         $content = $filter->execute();
     }
@@ -593,19 +594,4 @@ function download_content_id($item_id)
         'result' => false,
         'content' => ''
     );
-}
-
-// Download content with Readability PHP port
-function download_content_readability($content, $url)
-{
-    if (! empty($content)) {
-
-        $readability = new Readability($content, $url);
-
-        if ($readability->init()) {
-            return $readability->getContent()->innerHTML;
-        }
-    }
-
-    return '';
 }

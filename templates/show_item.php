@@ -30,10 +30,8 @@
         </nav>
         <?php endif ?>
 
-        <h1 <?= Helper\isRTL($item['language']) ? 'dir="rtl"' : '' ?>>
-            <a href="<?= $item['url'] ?>" rel="noreferrer" target="_blank" id="original-<?= $item['id'] ?>">
-                <?= Helper\escape($item['title']) ?>
-            </a>
+        <h1 <?= Helper\isRTL($item + array('rtl' => $feed['rtl'])) ? 'dir="rtl"' : '' ?>>
+            <a href="<?= $item['url'] ?>" rel="noreferrer" target="_blank" id="original-<?= $item['id'] ?>"><?= Helper\escape($item['title']) ?></a>
         </h1>
 
         <ul class="item-infos">
@@ -72,9 +70,7 @@
             <li>
                 <a
                     href="?action=mark-item-unread&amp;id=<?= $item['id'] ?>&amp;redirect=unread"
-                >
-                    <?= t('mark as unread') ?>
-                </a>
+                ><?= t('mark as unread') ?></a>
             </li>
             <li class="hide-mobile">
                 <span id="download-item"
@@ -82,14 +78,12 @@
                       data-failure-message="<?= t('unable to fetch content') ?>"
                       data-before-message="<?= t('in progress...') ?>"
                       data-after-message="<?= t('content downloaded') ?>">
-                    <a href="#" data-action="download-item">
-                        <?= t('download content') ?>
-                    </a>
+                    <a href="#" data-action="download-item"><?= t('download content') ?></a>
                 </span>
             </li>
         </ul>
 
-        <div id="item-content" <?= Helper\isRTL($item['language']) ? 'dir="rtl"' : '' ?>>
+        <div id="item-content" <?= Helper\isRTL($item + array('rtl' => $feed['rtl']))  ? 'dir="rtl"' : '' ?>>
 
             <?php if ($item['enclosure']): ?>
             <div id="item-content-enclosure">

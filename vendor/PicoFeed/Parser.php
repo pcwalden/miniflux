@@ -2,16 +2,9 @@
 
 namespace PicoFeed;
 
+use SimpleXMLElement;
 use DateTime;
 use DateTimeZone;
-use DOMXPath;
-use SimpleXMLElement;
-use PicoFeed\Config;
-use PicoFeed\Encoding;
-use PicoFeed\Filter;
-use PicoFeed\Grabber;
-use PicoFeed\Logging;
-use PicoFeed\XmlParser;
 
 /**
  * Base parser class
@@ -54,6 +47,14 @@ abstract class Parser
     protected $content = '';
 
     /**
+     * Fallback url
+     *
+     * @access protected
+     * @var string
+     */
+    protected $fallback_url = '';
+
+    /**
      * XML namespaces
      *
      * @access protected
@@ -62,12 +63,20 @@ abstract class Parser
     protected $namespaces = array();
 
     /**
+     * Enable the content filtering
+     *
+     * @access private
+     * @var bool
+     */
+    private $enable_filter = true;
+
+    /**
      * Enable the content grabber
      *
      * @access private
      * @var bool
      */
-    public $enable_grabber = false;
+    private $enable_grabber = false;
 
     /**
      * Ignore those urls for the content scraper
@@ -81,11 +90,13 @@ abstract class Parser
      * Constructor
      *
      * @access public
-     * @param  string  $content        Feed content
-     * @param  string  $http_encoding  HTTP encoding (headers)
+     * @param  string  $content         Feed content
+     * @param  string  $http_encoding   HTTP encoding (headers)
+     * @param  string  $base_url        Fallback url when the feed provide relative or broken url
      */
-    public function __construct($content, $http_encoding = '')
+    public function __construct($content, $http_encoding = '', $fallback_url = '')
     {
+        $this->fallback_url = $fallback_url;
         $xml_encoding = XmlParser::getEncodingFromXmlTag($content);
 
         // Strip XML tag to avoid multiple encoding/decoding in the next XML processing
@@ -96,7 +107,7 @@ abstract class Parser
         $this->content = Encoding::convert($this->content, $xml_encoding ?: $http_encoding);
 
         // Workarounds
-        $this->content = $this->normalizeData($this->content);
+        $this->content = Filter::normalizeData($this->content);
     }
 
     /**
@@ -120,23 +131,35 @@ abstract class Parser
         $this->namespaces = $xml->getNamespaces(true);
 
         $feed = new Feed;
+
         $this->findFeedUrl($xml, $feed);
+        $this->checkFeedUrl($feed);
+
         $this->findFeedTitle($xml, $feed);
+        $this->findFeedDescription($xml, $feed);
         $this->findFeedLanguage($xml, $feed);
         $this->findFeedId($xml, $feed);
         $this->findFeedDate($xml, $feed);
+        $this->findFeedLogo($xml, $feed);
 
         foreach ($this->getItemsTree($xml) as $entry) {
 
             $item = new Item;
             $this->findItemAuthor($xml, $entry, $item);
+
             $this->findItemUrl($entry, $item);
+            $this->checkItemUrl($feed, $item);
+
             $this->findItemTitle($entry, $item);
             $this->findItemId($entry, $item, $feed);
             $this->findItemDate($entry, $item);
             $this->findItemContent($entry, $item);
             $this->findItemEnclosure($entry, $item, $feed);
             $this->findItemLanguage($entry, $item, $feed);
+
+            $this->scrapWebsite($item);
+            $this->filterItemContent($feed, $item);
+
             $feed->items[] = $item;
         }
 
@@ -146,103 +169,73 @@ abstract class Parser
     }
 
     /**
-     * Filter HTML for entry content
+     * Check if the feed url is correct
      *
      * @access public
-     * @param  string  $item_content  Item content
-     * @param  string  $item_url      Item URL
-     * @return string                 Filtered content
+     * @param  Feed    $feed          Feed object
      */
-    public function filterHtml($item_content, $item_url)
+    public function checkFeedUrl(Feed $feed)
     {
-        $content = '';
+        $url = new Url($feed->getUrl());
 
-        // Setup the content scraper
-        if ($this->enable_grabber && ! in_array($item_url, $this->grabber_ignore_urls)) {
+        if ($url->isRelativeUrl()) {
+            $feed->url = $this->fallback_url;
+        }
+    }
 
-            $grabber = new Grabber($item_url);
+    /**
+     * Check if the item url is correct
+     *
+     * @access public
+     * @param  Feed    $feed          Feed object
+     * @param  Item    $item          Item object
+     */
+    public function checkItemUrl(Feed $feed, Item $item)
+    {
+        $url = new Url($item->getUrl());
+
+        if ($url->isRelativeUrl()) {
+            $item->url = Url::resolve($item->getUrl(), $feed->getUrl());
+        }
+    }
+
+    /**
+     * Fetch item content with the content grabber
+     *
+     * @access public
+     * @param  Item    $item          Item object
+     */
+    public function scrapWebsite(Item $item)
+    {
+        if ($this->enable_grabber && ! in_array($item->getUrl(), $this->grabber_ignore_urls)) {
+
+            $grabber = new Grabber($item->getUrl());
             $grabber->setConfig($this->config);
             $grabber->download();
 
             if ($grabber->parse()) {
-                $item_content = $grabber->getContent();
+                $item->content = $grabber->getContent() ?: $item->content;
             }
         }
-
-        // Content filtering
-        if ($item_content) {
-
-            if ($this->config !== null) {
-
-                $callback = $this->config->getContentFilteringCallback();
-
-                if (is_callable($callback)) {
-                    $content = $callback($item_content, $item_url);
-                }
-            }
-
-            if (! $content) {
-                $filter = new Filter($item_content, $item_url);
-                $filter->setConfig($this->config);
-                $content = $filter->execute();
-            }
-        }
-
-        return $content;
     }
 
     /**
-     * Dirty quickfixes before XML parsing
+     * Filter HTML for entry content
      *
      * @access public
-     * @param  string  $data Raw data
-     * @return string        Normalized data
+     * @param  Feed    $feed          Feed object
+     * @param  Item    $item          Item object
      */
-    public function normalizeData($data)
+    public function filterItemContent(Feed $feed, Item $item)
     {
-        $invalid_chars = array(
-            "\x10",
-            "\xc3\x20",
-            "&#x1F;",
-        );
-
-        foreach ($invalid_chars as $needle) {
-            $data = str_replace($needle, '', $data);
+        if ($this->isFilteringEnabled()) {
+            $filter = Filter::html($item->getContent(), $feed->getUrl());
+            $filter->setConfig($this->config);
+            $item->content = $filter->execute();
         }
-
-        $data = $this->replaceEntityAttribute($data);
-        return $data;
-    }
-
-    /**
-     * Replace & by &amp; for each href attribute (Fix broken feeds)
-     *
-     * @access public
-     * @param  string  $content Raw data
-     * @return string           Normalized data
-     */
-    public function replaceEntityAttribute($content)
-    {
-        $content = preg_replace_callback('/href="[^"]+"/', function(array $matches) {
-            return htmlspecialchars($matches[0], ENT_NOQUOTES, 'UTF-8', false);
-        }, $content);
-
-        return $content;
-    }
-
-    /**
-     * Trim whitespace from the begining, the end and inside a string and don't break utf-8 string
-     *
-     * @access public
-     * @param  string  $value  Raw data
-     * @return string          Normalized data
-     */
-    public function stripWhiteSpace($value)
-    {
-        $value = str_replace("\r", "", $value);
-        $value = str_replace("\t", "", $value);
-        $value = str_replace("\n", "", $value);
-        return trim($value);
+        else {
+            Logging::setMessage(get_called_class().': Content filtering disabled');
+        }
     }
 
     /**
@@ -356,25 +349,6 @@ abstract class Parser
     }
 
     /**
-     * Get xml:lang value
-     *
-     * @access public
-     * @param  string  $xml  XML string
-     * @return string        Language
-     */
-    public function getXmlLang($xml)
-    {
-        $dom = XmlParser::getDomDocument($this->content);
-
-        if ($dom === false) {
-            return '';
-        }
-
-        $xpath = new DOMXPath($dom);
-        return $xpath->evaluate('string(//@xml:lang[1])') ?: '';
-    }
-
-    /**
      * Return true if the given language is "Right to Left"
      *
      * @static
@@ -452,6 +426,32 @@ abstract class Parser
      * @access public
      * @return \PicoFeed\Parser
      */
+    public function disableContentFiltering()
+    {
+        $this->enable_filter = false;
+    }
+
+    /**
+     * Return true if the content filtering is enabled
+     *
+     * @access public
+     * @return boolean
+     */
+    public function isFilteringEnabled()
+    {
+        if ($this->config === null) {
+            return $this->enable_filter;
+        }
+
+        return $this->config->getContentFiltering($this->enable_filter);
+    }
+
+    /**
+     * Enable the content grabber
+     *
+     * @access public
+     * @return \PicoFeed\Parser
+     */
     public function enableContentGrabber()
     {
         $this->enable_grabber = true;
@@ -470,35 +470,150 @@ abstract class Parser
     }
 
     /**
-     * Get a value from a XML namespace
+     * Find the feed url
      *
      * @access public
-     * @param  SimpleXMLElement     $xml    XML element
-     * @param  array                $namespaces    XML namespaces
-     * @param  string               $property      XML tag name
-     * @param  string               $attribute     XML attribute name
-     * @return string
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
      */
-    public function getNamespaceValue(SimpleXMLElement $xml, array $namespaces, $property, $attribute = '')
-    {
-        foreach ($namespaces as $name => $url) {
-            $namespace = $xml->children($namespaces[$name]);
+    public abstract function findFeedUrl(SimpleXMLElement $xml, Feed $feed);
 
-            if ($namespace->$property->count() > 0) {
+    /**
+     * Find the feed title
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedTitle(SimpleXMLElement $xml, Feed $feed);
 
-                if ($attribute) {
+    /**
+     * Find the feed description
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedDescription(SimpleXMLElement $xml, Feed $feed);
 
-                    foreach ($namespace->$property->attributes() as $xml_attribute => $xml_value) {
-                        if ($xml_attribute === $attribute && $xml_value) {
-                            return (string) $xml_value;
-                        }
-                    }
-                }
+    /**
+     * Find the feed language
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedLanguage(SimpleXMLElement $xml, Feed $feed);
 
-                return (string) $namespace->$property;
-            }
-        }
+    /**
+     * Find the feed id
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedId(SimpleXMLElement $xml, Feed $feed);
 
-        return '';
-    }
+    /**
+     * Find the feed date
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedDate(SimpleXMLElement $xml, Feed $feed);
+
+    /**
+     * Find the feed logo url
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed xml
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findFeedLogo(SimpleXMLElement $xml, Feed $feed);
+
+    /**
+     * Get the path to the items XML tree
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml   Feed xml
+     * @return SimpleXMLElement
+     */
+    public abstract function getItemsTree(SimpleXMLElement $xml);
+
+    /**
+     * Find the item author
+     *
+     * @access public
+     * @param  SimpleXMLElement   $xml     Feed
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     */
+    public abstract function findItemAuthor(SimpleXMLElement $xml, SimpleXMLElement $entry, Item $item);
+
+    /**
+     * Find the item URL
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     */
+    public abstract function findItemUrl(SimpleXMLElement $entry, Item $item);
+
+    /**
+     * Find the item title
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     */
+    public abstract function findItemTitle(SimpleXMLElement $entry, Item $item);
+
+    /**
+     * Genereate the item id
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findItemId(SimpleXMLElement $entry, Item $item, Feed $feed);
+
+    /**
+     * Find the item date
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     */
+    public abstract function findItemDate(SimpleXMLElement $entry, Item $item);
+
+    /**
+     * Find the item content
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     */
+    public abstract function findItemContent(SimpleXMLElement $entry, Item $item);
+
+    /**
+     * Find the item enclosure
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findItemEnclosure(SimpleXMLElement $entry, Item $item, Feed $feed);
+
+    /**
+     * Find the item language
+     *
+     * @access public
+     * @param  SimpleXMLElement   $entry   Feed item
+     * @param  \PicoFeed\Item     $item    Item object
+     * @param  \PicoFeed\Feed     $feed    Feed object
+     */
+    public abstract function findItemLanguage(SimpleXMLElement $entry, Item $item, Feed $feed);
 }
