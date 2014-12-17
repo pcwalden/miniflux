@@ -211,7 +211,7 @@ abstract class Client
             $etag = $this->getHeader($response, 'ETag');
             $last_modified = $this->getHeader($response, 'Last-Modified');
 
-            if ($this->isPropertyEquals('etag', $etag) || $this->isPropertyEquals('last_modified', $last_modified)) {
+            if ($this->isPropertyEquals('etag', $etag) && $this->isPropertyEquals('last_modified', $last_modified)) {
                 $this->is_modified = false;
             }
 
