@@ -9,7 +9,8 @@ use PicoFarad\Template;
 // Display unread items
 Router\get_action('unread', function() {
 
-    Model\Item\autoflush();
+    Model\Item\autoflush_read();
+    Model\Item\autoflush_unread();
 
     $order = Request\param('order', 'updated');
     $direction = Request\param('direction', Model\Config\get('items_sorting_direction'));
@@ -46,6 +47,7 @@ Router\get_action('show', function() {
     $feed = Model\Feed\get($item['feed_id']);
 
     Model\Item\set_read($id);
+    $item['status'] = 'read';
 
     switch ($menu) {
         case 'unread':

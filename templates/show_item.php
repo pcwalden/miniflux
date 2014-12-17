@@ -36,21 +36,20 @@
 
         <ul class="item-infos">
             <li>
-            <?php if ($item['bookmark']): ?>
                 <a
-                    class="bookmark-icon"
-                    href="?action=bookmark&amp;value=0&amp;id=<?= $item['id'] ?>&amp;source=show&amp;menu=<?= $menu ?>"
-                    title="<?= t('remove bookmark') ?>"
+                    class="bookmark-icon icon"
+                    href="?action=bookmark&amp;value=<?= (int)!$item['bookmark'] ?>&amp;id=<?= $item['id'] ?>&amp;source=show&amp;menu=<?= $menu ?>"
+                    title="<?= ($item['bookmark']) ? t('remove bookmark') : t('bookmark') ?>"
+                    data-reverse-title="<?= ($item['bookmark']) ? t('bookmark') :t('remove bookmark') ?>"
                     data-action="bookmark"
                 ></a>
-            <?php else: ?>
+            </li>
+            <li>
                 <a
-                    class="bookmark-icon"
-                    href="?action=bookmark&amp;value=1&amp;id=<?= $item['id'] ?>&amp;source=show&amp;menu=<?= $menu ?>"
-                    title="<?= t('bookmark') ?>"
-                    data-action="bookmark"
+                    href="?action=mark-item-unread&amp;id=<?= $item['id'] ?>&amp;redirect=<?= $menu ?>&amp;feed_id=<?= $item['feed_id'] ?>"
+                    title="<?= t('mark as unread') ?>"
+                    class="read-icon icon"
                 ></a>
-            <?php endif ?>
             </li>
             <li>
                 <a href="?action=feed-items&amp;feed_id=<?= $feed['id'] ?>"><?= Helper\escape($feed['title']) ?></a>
@@ -63,11 +62,6 @@
                 <a href="<?= $item['enclosure'] ?>" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
             </li>
             <?php endif ?>
-            <li>
-                <a
-                    href="?action=mark-item-unread&amp;id=<?= $item['id'] ?>&amp;redirect=unread"
-                ><?= t('mark as unread') ?></a>
-            </li>
             <li class="hide-mobile">
                 <span id="download-item"
                       data-failure-message="<?= t('unable to fetch content') ?>"
