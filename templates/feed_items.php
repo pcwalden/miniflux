@@ -5,7 +5,7 @@
 <?php else: ?>
 
     <div class="page-header">
-        <h2><?= Helper\escape($feed['title']) ?><span id="page-counter"><?= isset($nb_items) ? $nb_items : '' ?></span></h2>
+        <h2><?= Helper\escape($feed['title']) ?>&lrm;<span id="page-counter"><?= isset($nb_items) ? $nb_items : '' ?></span></h2>
         <ul>
             <li>
                 <a href="?action=refresh-feed&amp;feed_id=<?= $feed['id'] ?>&amp;redirect=feed-items"><?= t('refresh') ?></a>
@@ -28,6 +28,7 @@
                 'offset' => $offset,
                 'hide' => false,
                 'display_mode' => $display_mode,
+                'favicons' => $favicons,
             )) ?>
         <?php endforeach ?>
 

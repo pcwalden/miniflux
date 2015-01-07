@@ -33,17 +33,19 @@ Features
 
 - Keyboard shortcuts
 - Full article download for feeds that display only a summary
+- Bookmarks
+- Send your favorite articles to Pinboard and Instapaper
 - Enclosure support (videos and podcasts)
 - Feed updates via a cronjob or with the user interface with one click
 
 ### More
 
 - Keeps history of read items
-- Basic bookmarks
 - Import/Export of OPML feeds
 - Themes
 - Auto-update from the user interface
 - Multiple databases (each user has his own database)
+- Image proxy to avoid mixed content warnings with HTTPS
 
 Requirements
 ------------
@@ -69,6 +71,16 @@ Documentation
 - [Fever API](docs/fever.markdown)
 - [Run Miniflux with Docker](docs/docker.markdown)
 - [FAQ](docs/faq.markdown)
+- [Tests](docs/tests.markdown)
+
+Related projects
+----------------
+
+External projects build around Miniflux:
+
+- [Miniflux embedded](https://github.com/repat/miniflux-embedded-android) is an Android app for Miniflux. It's basically an embedded WebView that saves your Miniflux URL and cookies. [Download on the Play Store](https://play.google.com/store/apps/details?id=de.repat.embeddedminiflux).
+- [munin-miniflux](https://github.com/dewey/munin-plugins/tree/master/munin-miniflux) is a munin wildcard plugin to draw graphs of your miniflux read and unread count.
+- [Hello Theme](https://github.com/meradoou/hello) Theme for Miniflux.
 
 Todo and known bugs
 -------------------
@@ -109,6 +121,7 @@ People who sent a pull-request, report a bug, make a new theme or share a super 
 - [James Barwell](https://github.com/JamesBarwell)
 - [Julian Oster](https://github.com/jlnostr)
 - [Jarek](https://github.com/jarek)
+- [Kaminary Shadows](https://github.com/kaminary)
 - [Luca Marra](https://github.com/facciocose)
 - [Martin Simon](https://github.com/c0ding)
 - [Mathias Kresin](https://github.com/mkresin)

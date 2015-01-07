@@ -4,18 +4,18 @@
     data-item-id="<?= $item['id'] ?>"
     data-item-status="<?= $item['status'] ?>"
     data-item-bookmark="<?= $item['bookmark'] ?>"
-    data-item-page="<?= $menu ?>"
     <?= $hide ? 'data-hide="true"' : '' ?>
     >
     <h2 <?= Helper\isRTL($item) ? 'dir="rtl"' : '' ?>>
         <span class="bookmark-icon"></span>
         <span class="read-icon"></span>
+        <?= Helper\favicon($favicons, $item['feed_id']) ?>
         <a
             href="?action=show&amp;menu=<?= $menu ?>&amp;id=<?= $item['id'] ?>"
             class="show"
         ><?= Helper\escape($item['title']) ?></a>
     </h2>
-    <?php if($display_mode === 'full'): ?>
+    <?php if ($display_mode === 'full'): ?>
         <div class="preview" <?= Helper\isRTL($item) ? 'dir="rtl"' : '' ?>>
             <?= $item['content'] ?>
         </div>

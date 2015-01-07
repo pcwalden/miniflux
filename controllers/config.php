@@ -17,6 +17,7 @@ Router\get_action('new-db', function() {
             'values' => array(
                 'csrf' => Model\Config\generate_csrf(),
             ),
+            'nb_unread_items' => Model\Item\count_by_status('unread'),
             'menu' => 'config',
             'title' => t('New database')
         )));
@@ -49,6 +50,7 @@ Router\post_action('new-db', function() {
         Response\html(Template\layout('new_db', array(
             'errors' => $errors,
             'values' => $values + array('csrf' => Model\Config\generate_csrf()),
+            'nb_unread_items' => Model\Item\count_by_status('unread'),
             'menu' => 'config',
             'title' => t('New database')
         )));
@@ -61,6 +63,7 @@ Router\post_action('new-db', function() {
 Router\get_action('confirm-auto-update', function() {
 
     Response\html(Template\layout('confirm_auto_update', array(
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('Confirmation')
     )));
@@ -89,7 +92,7 @@ Router\get_action('generate-tokens', function() {
         Model\Config\new_tokens();
     }
 
-    Response\redirect('?action=api');
+    Response\redirect('?action=config');
 });
 
 // Optimize the database manually
@@ -126,6 +129,7 @@ Router\get_action('config', function() {
         'sorting_options' => Model\Config\get_sorting_directions(),
         'display_mode' => Model\Config\get_display_mode(),
         'redirect_nothing_to_read_options' => Model\Config\get_nothing_to_read_redirections(),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('Preferences')
     )));
@@ -134,7 +138,7 @@ Router\get_action('config', function() {
 // Update preferences
 Router\post_action('config', function() {
 
-    $values = Request\values() + array('nocontent' => 0);
+    $values = Request\values() + array('nocontent' => 0, 'image_proxy' => 0, 'favicons' => 0);
     Model\Config\check_csrf_values($values);
     list($valid, $errors) = Model\Config\validate_modification($values);
 
@@ -155,12 +159,14 @@ Router\post_action('config', function() {
         'values' => Model\Config\get_all() + array('csrf' => Model\Config\generate_csrf()),
         'languages' => Model\Config\get_languages(),
         'timezones' => Model\Config\get_timezones(),
-        'autoflush_options' => Model\Config\get_autoflush_options(),
+        'autoflush_read_options' => Model\Config\get_autoflush_read_options(),
+        'autoflush_unread_options' => Model\Config\get_autoflush_unread_options(),
         'paging_options' => Model\Config\get_paging_options(),
         'theme_options' => Model\Config\get_themes(),
         'sorting_options' => Model\Config\get_sorting_directions(),
         'redirect_nothing_to_read_options' => Model\Config\get_nothing_to_read_redirections(),
         'display_mode' => Model\Config\get_display_mode(),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('Preferences')
     )));
@@ -171,6 +177,7 @@ Router\get_action('help', function() {
 
     Response\html(Template\layout('help', array(
         'config' => Model\Config\get_all(),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('Help')
     )));
@@ -182,6 +189,7 @@ Router\get_action('about', function() {
     Response\html(Template\layout('about', array(
         'csrf' => Model\Config\generate_csrf(),
         'config' => Model\Config\get_all(),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('About')
     )));
@@ -194,6 +202,7 @@ Router\get_action('database', function() {
         'csrf' => Model\Config\generate_csrf(),
         'config' => Model\Config\get_all(),
         'db_size' => filesize(\Model\Database\get_path()),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('Database')
     )));
@@ -203,9 +212,36 @@ Router\get_action('database', function() {
 Router\get_action('api', function() {
 
     Response\html(Template\layout('api', array(
-        'csrf' => Model\Config\generate_csrf(),
         'config' => Model\Config\get_all(),
+        'nb_unread_items' => Model\Item\count_by_status('unread'),
         'menu' => 'config',
         'title' => t('API')
     )));
+});
+
+// Display bookmark services page
+Router\get_action('services', function() {
+
+    Response\html(Template\layout('services', array(
+        'errors' => array(),
+        'values' => Model\Config\get_all() + array('csrf' => Model\Config\generate_csrf()),
+        'menu' => 'config',
+        'title' => t('External services')
+    )));
+});
+
+// Update bookmark services
+Router\post_action('services', function() {
+
+    $values = Request\values() + array('pinboard_enabled' => 0, 'instapaper_enabled' => 0);
+    Model\Config\check_csrf_values($values);
+
+    if (Model\Config\save($values)) {
+        Session\flash(t('Your preferences are updated.'));
+    }
+    else {
+        Session\flash_error(t('Unable to update your preferences.'));
+    }
+
+    Response\redirect('?action=services');
 });

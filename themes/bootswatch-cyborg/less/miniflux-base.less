@@ -56,7 +56,7 @@ span {
         }
     }
     
-    &[id^="items-count-"] {
+    &.items-count {
         &:before {
             content: "@{icon-bracket-open}";
         }
@@ -65,6 +65,19 @@ span {
             content: "@{icon-bracket-close}";
         }
     }
+}
+
+// Loading
+.loading-icon:before {
+    content: "@{icon-loading}";   
+    animation-name: blinker;
+    -webkit-animation-name: blinker; /* Chrome, Safari, Opera */
+    animation-duration: 500ms;
+    -webkit-animation-duration: 500ms; /* Chrome, Safari, Opera */
+    animation-timing-function: ease-in-out;
+    -webkit-animation-timing-function: ease-in-out; /* Chrome, Safari, Opera */
+    animation-iteration-count: infinite;
+    -webkit-animation-iteration-count: infinite; /* Chrome, Safari, Opera */
 }
 
 // Logo
@@ -264,7 +277,7 @@ article ul.item-menu {
 	}
 }
 
-.downloading {
+#download-item {
 	&:extend(.text-muted all);
 }
 

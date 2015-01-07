@@ -7,7 +7,6 @@
         data-item-id="<?= $item['id'] ?>"
         data-item-status="<?= $item['status'] ?>"
         data-item-bookmark="<?= $item['bookmark'] ?>"
-        data-item-page="<?= $menu ?>"
     >
 
         <?php if (isset($item_nav)): ?>
@@ -45,13 +44,6 @@
                 ></a>
             </li>
             <li>
-                <a
-                    href="?action=mark-item-unread&amp;id=<?= $item['id'] ?>&amp;redirect=<?= $menu ?>&amp;feed_id=<?= $item['feed_id'] ?>"
-                    title="<?= t('mark as unread') ?>"
-                    class="read-icon icon"
-                ></a>
-            </li>
-            <li>
                 <a href="?action=feed-items&amp;feed_id=<?= $feed['id'] ?>"><?= Helper\escape($feed['title']) ?></a>
             </li>
             <li class="hide-mobile">
@@ -85,7 +77,11 @@
                         <source src="<?= $item['enclosure'] ?>" type="<?= $item['enclosure_type'] ?>">
                     </video>
                 <?php elseif (strpos($item['enclosure_type'], 'image') !== false): ?>
-                    <img src="<?= $item['enclosure'] ?>" alt="enclosure"/>
+                    <?php if ($image_proxy_enabled): ?>
+                        <img src="?action=proxy&amp;url=<?= urlencode($item['enclosure']) ?>" alt="enclosure"/>
+                    <?php else: ?>
+                        <img src="<?= $item['enclosure'] ?>" alt="enclosure"/>
+                    <?php endif ?>
                 <?php endif ?>
             </div>
             <?php endif ?>

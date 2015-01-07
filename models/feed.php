@@ -2,17 +2,84 @@
 
 namespace Model\Feed;
 
+use Model\Config;
+use Model\Item;
 use SimpleValidator\Validator;
 use SimpleValidator\Validators;
 use PicoDb\Database;
-use PicoFeed\Export;
-use PicoFeed\Import;
-use PicoFeed\Reader;
-use PicoFeed\Logging;
-use Model\Config;
-use Model\Item;
+use PicoFeed\Serialization\Export;
+use PicoFeed\Serialization\Import;
+use PicoFeed\Reader\Reader;
+use PicoFeed\Reader\Favicon;
+use PicoFeed\PicoFeedException;
+use PicoFeed\Client\InvalidUrlException;
 
 const LIMIT_ALL = -1;
+
+// Download and store the favicon
+function fetch_favicon($feed_id, $site_url)
+{
+    $favicon = new Favicon;
+
+    return Database::get('db')
+            ->table('favicons')
+            ->save(array(
+                'feed_id' => $feed_id,
+                'link' => $favicon->find($site_url),
+                'icon' => $favicon->getDataUri(),
+            ));
+}
+
+// Refresh favicon
+function refresh_favicon($feed_id, $site_url)
+{
+    if (Config\get('favicons') == 1 && ! has_favicon($feed_id)) {
+        fetch_favicon($feed_id, $site_url);
+    }
+}
+
+// Return true if the feed have a favicon
+function has_favicon($feed_id)
+{
+    return Database::get('db')->table('favicons')->eq('feed_id', $feed_id)->count() === 1;
+}
+
+// Get favicons for those feeds
+function get_favicons(array $feed_ids)
+{
+    if (Config\get('favicons') == 0) {
+        return array();
+    }
+
+    return Database::get('db')
+            ->table('favicons')
+            ->in('feed_id', $feed_ids)
+            ->listing('feed_id', 'icon');
+}
+
+// Get all favicons for a list of items
+function get_item_favicons(array $items)
+{
+    $feed_ids = array();
+
+    foreach ($items as $item) {
+        $feeds_ids[] = $item['feed_id'];
+    }
+
+    return get_favicons($feed_ids);
+}
+
+// Get all favicons
+function get_all_favicons()
+{
+    if (Config\get('favicons') == 0) {
+        return array();
+    }
+
+    return Database::get('db')
+            ->table('favicons')
+            ->listing('feed_id', 'icon');
+}
 
 // Update feed information
 function update(array $values)
@@ -40,7 +107,6 @@ function export_opml()
 // Import OPML file
 function import_opml($content)
 {
-    Logging::setTimezone(Config\get('timezone'));
     $import = new Import($content);
     $feeds = $import->execute();
 
@@ -76,12 +142,24 @@ function import_opml($content)
 // Add a new feed from an URL
 function create($url, $enable_grabber = false, $force_rtl = false)
 {
-    $reader = new Reader(Config\get_reader_config());
-    $resource = $reader->download($url);
+    try {
+        $db = Database::get('db');
 
-    $parser = $reader->getParser();
+        // Discover the feed
+        $reader = new Reader(Config\get_reader_config());
+        $resource = $reader->discover($url);
 
-    if ($parser !== false) {
+        // Feed already there
+        if ($db->table('feeds')->eq('feed_url', $resource->getUrl())->count()) {
+            return false;
+        }
+
+        // Parse the feed
+        $parser = $reader->getParser(
+            $resource->getUrl(),
+            $resource->getContent(),
+            $resource->getEncoding()
+        );
 
         if ($enable_grabber) {
             $parser->enableContentGrabber();
@@ -89,56 +167,40 @@ function create($url, $enable_grabber = false, $force_rtl = false)
 
         $feed = $parser->execute();
 
-        if ($feed === false) {
+        // Save the feed
+        $result = $db->table('feeds')->save(array(
+            'title' => $feed->getTitle(),
+            'site_url' => $feed->getSiteUrl(),
+            'feed_url' => $feed->getFeedUrl(),
+            'download_content' => $enable_grabber ? 1 : 0,
+            'rtl' => $force_rtl ? 1 : 0,
+            'last_modified' => $resource->getLastModified(),
+            'last_checked' => time(),
+            'etag' => $resource->getEtag(),
+        ));
+
+        if ($result) {
+
+            $feed_id = $db->getConnection()->getLastId();
+
+            Item\update_all($feed_id, $feed->getItems());
+            refresh_favicon($feed_id, $feed->getSiteUrl());
+
             Config\write_debug();
-            return false;
-        }
 
-        if (! $feed->getUrl()) {
-            $feed->url = $reader->getUrl();
-        }
-
-        if (! $feed->getTitle()) {
-            Config\write_debug();
-            return false;
-        }
-
-        $db = Database::get('db');
-
-        // Check if the feed is already there
-        if (! $db->table('feeds')->eq('feed_url', $reader->getUrl())->count()) {
-
-            // Etag and LastModified are added the next update
-            $rs = $db->table('feeds')->save(array(
-                'title' => $feed->getTitle(),
-                'site_url' => $feed->getUrl(),
-                'feed_url' => $reader->getUrl(),
-                'download_content' => $enable_grabber ? 1 : 0,
-                'rtl' => $force_rtl ? 1 : 0,
-            ));
-
-            if ($rs) {
-
-                $feed_id = $db->getConnection()->getLastId();
-                Item\update_all($feed_id, $feed->getItems(), $enable_grabber);
-                Config\write_debug();
-
-                return (int) $feed_id;
-            }
+            return (int) $feed_id;
         }
     }
+    catch (PicoFeedException $e) {}
 
     Config\write_debug();
-
     return false;
 }
 
 // Refresh all feeds
 function refresh_all($limit = LIMIT_ALL)
 {
-    $feeds_id = get_ids($limit);
-
-    foreach ($feeds_id as $feed_id) {
+    foreach (@get_ids($limit) as $feed_id) {
         refresh($feed_id);
     }
 
@@ -151,52 +213,61 @@ function refresh_all($limit = LIMIT_ALL)
 // Refresh one feed
 function refresh($feed_id)
 {
-    $feed = get($feed_id);
+    try {
 
-    if (empty($feed)) {
-        return false;
-    }
+        $feed = get($feed_id);
 
-    $reader = new Reader(Config\get_reader_config());
-
-    $resource = $reader->download(
-        $feed['feed_url'],
-        $feed['last_modified'],
-        $feed['etag']
-    );
-
-    // Update the `last_checked` column each time, HTTP cache or not
-    update_last_checked($feed_id);
-
-    if (! $resource->isModified()) {
-        update_parsing_error($feed_id, 0);
-        Config\write_debug();
-        return true;
-    }
-
-    $parser = $reader->getParser();
-
-    if ($parser !== false) {
-
-        if ($feed['download_content']) {
-
-            // Don't fetch previous items, only new one
-            $parser->enableContentGrabber();
-            $parser->setGrabberIgnoreUrls(Database::get('db')->table('items')->eq('feed_id', $feed_id)->findAllByColumn('url'));
+        if (empty($feed)) {
+            return false;
         }
 
-        $result = $parser->execute();
+        $reader = new Reader(Config\get_reader_config());
 
-        if ($result !== false) {
+        $resource = $reader->download(
+            $feed['feed_url'],
+            $feed['last_modified'],
+            $feed['etag']
+        );
 
-            update_parsing_error($feed_id, 0);
+        // Update the `last_checked` column each time, HTTP cache or not
+        update_last_checked($feed_id);
+
+        // Feed modified
+        if ($resource->isModified()) {
+
+            $parser = $reader->getParser(
+                $resource->getUrl(),
+                $resource->getContent(),
+                $resource->getEncoding()
+            );
+
+            if ($feed['download_content']) {
+
+                $parser->enableContentGrabber();
+
+                // Don't fetch previous items, only new one
+                $parser->setGrabberIgnoreUrls(
+                    Database::get('db')->table('items')->eq('feed_id', $feed_id)->findAllByColumn('url')
+                );
+            }
+
+            $feed = $parser->execute();
+
             update_cache($feed_id, $resource->getLastModified(), $resource->getEtag());
 
-            Item\update_all($feed_id, $result->getItems(), $feed['download_content']);
-            Config\write_debug();
-
-            return true;
+            Item\update_all($feed_id, $feed->getItems());
+            refresh_favicon($feed_id, $feed->getSiteUrl());
         }
+
+        update_parsing_error($feed_id, 0);
+        Config\write_debug();
+
+        return true;
+    }
+    catch (InvalidUrlException $e) {
+        // disable($feed_id);
+    }
+    catch (PicoFeedException $e) {
     }
 
     update_parsing_error($feed_id, 1);
@@ -208,15 +279,13 @@ function refresh($feed_id)
 // Get the list of feeds ID to refresh
 function get_ids($limit = LIMIT_ALL)
 {
-    $table_feeds = Database::get('db')->table('feeds')
-                                             ->eq('enabled', 1)
-                                             ->asc('last_checked');
+    $query = Database::get('db')->table('feeds')->eq('enabled', 1)->asc('last_checked');
 
     if ($limit !== LIMIT_ALL) {
-        $table_feeds->limit((int) $limit);
+        $query->limit((int) $limit);
     }
 
-    return $table_feeds->listing('id', 'id');
+    return $query->listing('id', 'id');
 }
 
 // Get feeds with no item
@@ -231,7 +300,6 @@ function get_all_empty()
         ->findAll();
 
     foreach ($feeds as $key => &$feed) {
-
         if ($feed['nb_items'] > 0) {
             unset($feeds[$key]);
         }

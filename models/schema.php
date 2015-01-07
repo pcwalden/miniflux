@@ -5,6 +5,41 @@ namespace Schema;
 use PDO;
 use Model\Config;
 
+const VERSION = 34;
+
+function version_34($pdo)
+{
+    $pdo->exec('ALTER TABLE config ADD COLUMN favicons INTEGER DEFAULT 0');
+
+    $pdo->exec(
+        'CREATE TABLE favicons (
+            feed_id INTEGER UNIQUE,
+            link TEXT,
+            icon TEXT,
+            FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE
+        )'
+    );
+}
+
+function version_33($pdo)
+{
+    $pdo->exec('ALTER TABLE config ADD COLUMN image_proxy INTEGER DEFAULT 0');
+}
+
+function version_32($pdo)
+{
+    $pdo->exec('ALTER TABLE config ADD COLUMN instapaper_enabled INTEGER DEFAULT 0');
+    $pdo->exec('ALTER TABLE config ADD COLUMN instapaper_username TEXT');
+    $pdo->exec('ALTER TABLE config ADD COLUMN instapaper_password TEXT');
+}
+
+function version_31($pdo)
+{
+    $pdo->exec('ALTER TABLE config ADD COLUMN pinboard_enabled INTEGER DEFAULT 0');
+    $pdo->exec('ALTER TABLE config ADD COLUMN pinboard_token TEXT');
+    $pdo->exec('ALTER TABLE config ADD COLUMN pinboard_tags TEXT DEFAULT "miniflux"');
+}
+
 function version_30($pdo)
 {
     $pdo->exec('ALTER TABLE config ADD COLUMN autoflush_unread INTEGER DEFAULT 45');

@@ -1,5 +1,23 @@
 Miniflux.Item = (function() {
 
+    var nbUnreadItems = function() {
+        var navCounterElement = document.getElementById("nav-counter");
+        
+        if (navCounterElement) {
+            counter = parseInt(navCounterElement.textContent, 10) || 0;
+            return counter;
+        }
+    }();
+
+    var nbPageItems = function() {
+        var pageCounterElement = document.getElementById("page-counter");
+        
+        if (pageCounterElement) {
+            counter = parseInt(pageCounterElement.textContent, 10) || 0;
+            return counter;
+        }
+    }();
+
     function getItemID(item)
     {
         item_id = item.getAttribute("data-item-id");
@@ -40,6 +58,9 @@ Miniflux.Item = (function() {
             var link = item.querySelector("a.mark");
             if (link) link.setAttribute("data-action", "mark-unread");
         }
+        
+        nbUnreadItems--;
+        updateCounters();
     }
 
     function showItemAsUnread(item)
@@ -55,6 +76,9 @@ Miniflux.Item = (function() {
             var link = item.querySelector("a.mark");
             if (link) link.setAttribute("data-action", "mark-read");
         }
+        
+        nbUnreadItems++;
+        updateCounters();
     }
 
     function hideItem(item)
@@ -64,30 +88,34 @@ Miniflux.Item = (function() {
         }
 
         item.parentNode.removeChild(item);
-        var pageCounter = document.getElementById("page-counter");
+        nbPageItems--;
+    }
 
-        if (pageCounter) {
-            var source = item.getAttribute("data-item-page");
-            var counter = parseInt(pageCounter.textContent, 10) - 1;
-            var articles = document.getElementsByTagName("article");
-            
-            if (counter === 0 || articles.length === 0) {
-                window.location = location.href;
-            }
+    function updateCounters()
+    {
+        // imitate special handling within miniflux
+        if (nbPageItems  === 0) {
+            window.location.reload();
+        }
 
-            pageCounter.textContent = counter;
+        var pageCounterElement = document.getElementById("page-counter");
+        pageCounterElement.textContent = nbPageItems || '';
+        
+        var navCounterElement = document.getElementById("nav-counter");
+        navCounterElement.textContent = nbUnreadItems || '';        
 
-            switch (source) {
-                case "unread":
-                    document.title = "Miniflux (" + counter + ")";
-                    document.getElementById("nav-counter").textContent = counter;
-                    break;
-                case "feed-items":
-                    document.title = "(" + counter + ") " + pageCounter.parentNode.firstChild.nodeValue;
-                    break;
-                default:
-                    document.title = pageCounter.parentNode.firstChild.nodeValue + " (" + counter + ")";
-            }
+        // pagetitle depends on current page
+        var sectionElement = document.querySelector("section.page");
+        switch (sectionElement.getAttribute("data-item-page")) {
+            case "unread":
+                document.title = "Miniflux (" + nbUnreadItems + ")";
+                break;
+            case "feed-items":
+                document.title = "(" + nbPageItems  + ") " + pageCounterElement.parentNode.firstChild.nodeValue;
+                break;
+            default:
+                document.title = pageCounterElement.parentNode.firstChild.nodeValue + " (" + nbPageItems + ")";
+                break;
         }
     }
 
@@ -95,7 +123,7 @@ Miniflux.Item = (function() {
     {
         var item_id = getItemID(item);
         var request = new XMLHttpRequest();
-        
+
         request.onload = function() {
             if (Miniflux.Nav.IsListing()) showItemAsRead(item);
         };
@@ -107,7 +135,7 @@ Miniflux.Item = (function() {
     {
         var item_id = getItemID(item);
         var request = new XMLHttpRequest();
-        
+
         request.onload = function() {
             if (Miniflux.Nav.IsListing()) showItemAsUnread(item);
         };
@@ -119,9 +147,14 @@ Miniflux.Item = (function() {
     {
         var item_id = getItemID(item);
         var request = new XMLHttpRequest();
-        
+
         request.onload = function() {
-            if (Miniflux.Nav.IsListing()) hideItem(item);
+            if (Miniflux.Nav.IsListing()) {
+                hideItem(item);
+                
+                if (item.getAttribute("data-item-status") === "unread") nbUnreadItems--;
+                updateCounters();
+            }
         };
         request.open("POST", "?action=mark-item-removed&id=" + item_id, true);
         request.send();
@@ -135,10 +168,13 @@ Miniflux.Item = (function() {
             var item_id = getItemID(item);
             var value = item.getAttribute("data-item-bookmark") === "1" ? "0" : "1";
             var request = new XMLHttpRequest();
-            
+
             request.onload = function() {
-                if (Miniflux.Nav.IsListing() && item.getAttribute("data-item-page") === "bookmarks") {
+                var sectionElement = document.querySelector("section.page");
+                
+                if (Miniflux.Nav.IsListing() && sectionElement.getAttribute("data-item-page") === "bookmarks") {
                     hideItem(item);
+                    updateCounters();
                 }
                 else {
                     item.setAttribute("data-item-bookmark", value);
@@ -150,7 +186,7 @@ Miniflux.Item = (function() {
                         var link = item.querySelector("a.bookmark-icon");
                         if (link && link.hasAttribute("data-reverse-title")) {
                             var title = link.getAttribute("title");
-            
+
                             link.setAttribute("title", link.getAttribute("data-reverse-title"));
                             link.setAttribute("data-reverse-title", title);
                         }
@@ -181,55 +217,37 @@ Miniflux.Item = (function() {
             if (link) {
                 if (item.getAttribute("data-item-status") === "unread") markAsRead(item);
                 link.removeAttribute("data-action");
-                link.click();
+
+                if (Miniflux.Event.lastEventType !== "mouse") {
+                    link.click();
+                }
             }
         },
         DownloadContent: function(item) {
             var container = document.getElementById("download-item");
             if (! container) return;
 
-            var item_id = getItemID(item);
-            var message = container.getAttribute("data-before-message");
-
-            var span = document.createElement("span");
-            span.appendChild(document.createTextNode("☀"));
-            span.className = "loading-icon";
-
-            container.innerHTML = "";
-            container.className = "downloading";
-            container.appendChild(span);
-            container.appendChild(document.createTextNode(" " + message));
-
-            var icon_interval = setInterval(Miniflux.App.BlinkIcon, 250);
-
+            container.innerHTML = " " + container.getAttribute("data-before-message");
+            container.className = "loading-icon";
+            
             var request = new XMLHttpRequest();
-
             request.onload = function() {
 
                 var response = JSON.parse(request.responseText);
-                clearInterval(icon_interval);
-
+                container.className = "";
+                
                 if (response.result) {
-
                     var content = document.getElementById("item-content");
                     if (content) content.innerHTML = response.content;
-
-                    if (container) {
-                        var message = container.getAttribute("data-after-message");
-                        container.innerHTML = "";
-                        container.appendChild(document.createTextNode(" " + message));
-                    }
+                    
+                    container.innerHTML = container.getAttribute("data-after-message");
                 }
                 else {
-
-                    if (container) {
-                        var message = container.getAttribute("data-failure-message");
-                        container.innerHTML = "";
-                        container.appendChild(document.createTextNode(" " + message));
-                    }
+                    container.innerHTML = container.getAttribute("data-failure-message");
                 }
             };
-
+            
+            var item_id = getItemID(item);
             request.open("POST", "?action=download-item&id=" + item_id, true);
             request.send();
         },
@@ -249,6 +267,22 @@ Miniflux.Item = (function() {
 
             request.open("POST", "?action=mark-items-as-read", true);
             request.send(JSON.stringify(listing));
+        },
+        ToggleRTLMode: function() {
+            var tags = [
+                "#current-item h1",
+                "#item-content",
+                "#listing #current-item h2",
+                "#listing #current-item .preview"
+            ];
+
+            for (var i = 0; i < tags.length; i++) {
+                var tag = document.querySelector(tags[i]);
+
+                if (tag) {
+                    tag.dir = tag.dir == "" ? "rtl" : "";
+                }
+            }
         }
     };
 
