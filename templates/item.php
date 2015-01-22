@@ -40,7 +40,15 @@
         </li>
         <?php if ($item['enclosure']): ?>
             <li>
-                <a href="<?= $item['enclosure'] ?>" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
+            <?php if (ereg('^video/', $item['enclosure_type'])): ?>
+                <a href="<?= $item['enclosure'] ?>" class="video-enclosure" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
+            <?php elseif(ereg('^audio/', $item['enclosure_type'])): ?>
+                <a href="<?= $item['enclosure'] ?>" class="audio-enclosure" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
+            <?php elseif(ereg('^image/', $item['enclosure_type'])): ?>
+                <a href="<?= $item['enclosure'] ?>" class="image-enclosure" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
+            <?php else: ?>
+                <a href="<?= $item['enclosure'] ?>" class="enclosure" rel="noreferrer" target="_blank"><?= t('attachment') ?></a>
+            <?php endif ?>
             </li>
         <?php endif ?>
         <?= \PicoFarad\Template\load('bookmark_links', array('item' => $item, 'menu' => $menu, 'offset' => $offset, 'source' => '')) ?>
