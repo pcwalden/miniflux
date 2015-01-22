@@ -67,7 +67,6 @@ function authenticate()
 
             // Create the session
             $_SESSION['user'] = User\get($record['username']);
-            $_SESSION['config'] = Config\get_all();
 
             return true;
         }
@@ -128,13 +127,13 @@ function destroy()
 
     if ($credentials !== false) {
 
-        delete_cookie();
-
         Database::get('db')
              ->table(TABLE)
              ->eq('token', $credentials['token'])
              ->remove();
     }
+
+    delete_cookie();
 }
 
 /**
@@ -233,7 +232,9 @@ function decode_cookie($value)
 {
     @list($database, $token, $sequence) = explode('|', $value);
 
-    DatabaseModel\select(base64_decode($database));
+    if (! DatabaseModel\select(base64_decode($database))) {
+        return false;
+    }
 
     return array(
         'token' => $token,

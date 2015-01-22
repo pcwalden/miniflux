@@ -77,6 +77,18 @@ class Rss20 extends Parser
     }
 
     /**
+     * Find the feed icon
+     *
+     * @access public
+     * @param  SimpleXMLElement          $xml     Feed xml
+     * @param  \PicoFeed\Parser\Feed     $feed    Feed object
+     */
+    public function findFeedIcon(SimpleXMLElement $xml, Feed $feed)
+    {
+        $feed->icon = '';
+    }
+
+    /**
      * Find the feed title
      *
      * @access public
@@ -122,7 +134,7 @@ class Rss20 extends Parser
     public function findFeedDate(SimpleXMLElement $xml, Feed $feed)
     {
         $date = isset($xml->channel->pubDate) ? $xml->channel->pubDate : $xml->channel->lastBuildDate;
-        $feed->date = $this->parseDate((string) $date);
+        $feed->date = $this->date->getTimestamp((string) $date);
     }
 
     /**
@@ -144,7 +156,7 @@ class Rss20 extends Parser
             $date = (string) $entry->pubDate;
         }
 
-        $item->date = $this->parseDate($date);
+        $item->date = $this->date->getTimestamp($date);
     }
 
     /**

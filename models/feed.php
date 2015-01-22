@@ -29,12 +29,12 @@ function store_favicon($feed_id, $link, $icon)
 }
 
 // Download favicon
-function fetch_favicon($feed_id, $site_url)
+function fetch_favicon($feed_id, $site_url, $icon_link)
 {
     if (Config\get('favicons') == 1 && ! has_favicon($feed_id)) {
         $favicon = new Favicon;
 
-        $link = $favicon->find($site_url);
+        $link = $favicon->find($site_url, $icon_link);
         $icon = $favicon->getDataUri();
 
         if ($icon !== '') {
@@ -59,7 +59,7 @@ function get_favicons(array $feed_ids)
     return Database::get('db')
             ->table('favicons')
             ->in('feed_id', $feed_ids)
-            ->listing('feed_id', 'icon');
+            ->hashmap('feed_id', 'icon');
 }
 
 // Get all favicons for a list of items
@@ -83,7 +83,7 @@ function get_all_favicons()
 
     return Database::get('db')
             ->table('favicons')
-            ->listing('feed_id', 'icon');
+            ->hashmap('feed_id', 'icon');
 }
 
 // Update feed information
@@ -189,7 +189,7 @@ function create($url, $enable_grabber = false, $force_rtl = false)
             $feed_id = $db->getConnection()->getLastId();
 
             Item\update_all($feed_id, $feed->getItems());
-            fetch_favicon($feed_id, $feed->getSiteUrl());
+            fetch_favicon($feed_id, $feed->getSiteUrl(), $feed->getIcon());
 
             Config\write_debug();
 
@@ -261,7 +261,7 @@ function refresh($feed_id)
             update_cache($feed_id, $resource->getLastModified(), $resource->getEtag());
 
             Item\update_all($feed_id, $feed->getItems());
-            fetch_favicon($feed_id, $feed->getSiteUrl());
+            fetch_favicon($feed_id, $feed->getSiteUrl(), $feed->getIcon());
         }
 
         update_parsing_error($feed_id, 0);
@@ -290,7 +290,7 @@ function get_ids($limit = LIMIT_ALL)
         $query->limit((int) $limit);
     }
 
-    return $query->listing('id', 'id');
+    return $query->hashmap('id', 'id');
 }
 
 // get number of feeds with errors

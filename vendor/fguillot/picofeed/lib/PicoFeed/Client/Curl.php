@@ -183,6 +183,7 @@ class Curl extends Client
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, array($this, 'readHeaders'));
         curl_setopt($ch, CURLOPT_COOKIEJAR, 'php://memory');
         curl_setopt($ch, CURLOPT_COOKIEFILE, 'php://memory');
+        curl_setopt($ch, CURLOPT_SSLVERSION, 1); // Enforce TLS v1
 
         $ch = $this->prepareProxyContext($ch);
         $ch = $this->prepareAuthContext($ch);
@@ -232,7 +233,7 @@ class Curl extends Client
     {
         $this->executeContext();
 
-        list($status, $headers) = $this->parseHeaders(explode("\r\n", $this->headers[$this->headers_counter - 1]));
+        list($status, $headers) = HttpHeaders::parse(explode("\r\n", $this->headers[$this->headers_counter - 1]));
 
         // When restricted with open_basedir
         if ($this->needToHandleRedirection($follow_location, $status)) {

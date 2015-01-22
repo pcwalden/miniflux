@@ -30,7 +30,13 @@ function response(array $response)
 function auth()
 {
     if (! empty($_GET['database'])) {
-        Model\Database\select($_GET['database']);
+        // Return unauthorized if the requested database could not be found
+        if (! Model\Database\select($_GET['database'])) {
+            return array(
+                'api_version' => 3,
+                'auth' => 0,
+            );
+        }
     }
 
     $credentials = Database::get('db')->table('config')

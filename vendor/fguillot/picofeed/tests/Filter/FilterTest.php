@@ -14,6 +14,10 @@ class FilterTest extends PHPUnit_Framework_TestCase
         $expected = '<html><body><h1>boo</h1></body>';
         $this->assertEquals($expected, Filter::stripHeadTags($input));
 
+        $input = file_get_contents('tests/fixtures/html4_page.html');
+        $expected = file_get_contents('tests/fixtures/html4_head_stripped_page.html');
+        $this->assertEquals($expected, Filter::stripHeadTags($input));
+
         $input = file_get_contents('tests/fixtures/html_page.html');
         $expected = file_get_contents('tests/fixtures/html_head_stripped_page.html');
         $this->assertEquals($expected, Filter::stripHeadTags($input));
@@ -95,6 +99,19 @@ class FilterTest extends PHPUnit_Framework_TestCase
             $f->execute()
         );
 
+        // Test setFilterImageProxyUrl and HTTPS
+        $config = new Config;
+        $config->setFilterImageProxyUrl('http://myproxy/?url=%s');
+
+        $f = Filter::html('<p>Image <img src="https://localhost/image.png" alt="My Image"/></p>', 'http://foo');
+        $f->setConfig($config);
+
+        $this->assertEquals(
+            '<p>Image <img src="https://localhost/image.png" alt="My Image"/></p>',
+            $f->execute()
+        );
+
+        // Test setFilterImageProxyUrl
         $config = new Config;
         $config->setFilterImageProxyUrl('http://myproxy/?url=%s');
 
@@ -102,21 +119,22 @@ class FilterTest extends PHPUnit_Framework_TestCase
         $f->setConfig($config);
 
         $this->assertEquals(
-            '<p>Image <img src="http://myproxy/?url='.urlencode('http://foo/image.png').'" alt="My Image"/></p>',
+            '<p>Image <img src="http://myproxy/?url='.rawurlencode('http://foo/image.png').'" alt="My Image"/></p>',
             $f->execute()
         );
 
+        // Test setFilterImageProxyCallback
         $config = new Config;
         $config->setFilterImageProxyCallback(function ($image_url) {
             $key = hash_hmac('sha1', $image_url, 'secret');
-            return 'https://mypublicproxy/'.$key.'/'.urlencode($image_url);
+            return 'https://mypublicproxy/'.$key.'/'.rawurlencode($image_url);
         });
 
         $f = Filter::html('<p>Image <img src="/image.png" alt="My Image"/></p>', 'http://foo');
         $f->setConfig($config);
 
         $this->assertEquals(
-            '<p>Image <img src="https://mypublicproxy/4924964043f3119b3cf2b07b1922d491bcc20092/'.urlencode('http://foo/image.png').'" alt="My Image"/></p>',
+            '<p>Image <img src="https://mypublicproxy/4924964043f3119b3cf2b07b1922d491bcc20092/'.rawurlencode('http://foo/image.png').'" alt="My Image"/></p>',
             $f->execute()
         );
     }
