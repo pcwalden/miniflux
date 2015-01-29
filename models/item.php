@@ -486,9 +486,7 @@ function update_all($feed_id, array $items)
             // Some sites add enclosures later without changinging the item id. e.g. NPR, ScientificAmerican
             elseif (isset($item->enclosure) && $item->enclosure && !$itemrec['enclosure']) {
 
-                \PicoFeed\Logging::log('Updated Item media entry the database');
-                // \PicoFeed\Logging::log('$item->enclosure: '.$item->enclosure?'true':'false');
-                // \PicoFeed\Logging::log('!$itemrec[enclosure]: '.(!$itemrec['enclosure'])?'true':'false');
+                Logger::setMessage('Updated Item media entry the database');
 
                 $db->table('items')->eq('id', $item->id)->save(array(
                     'status' => 'unread',
