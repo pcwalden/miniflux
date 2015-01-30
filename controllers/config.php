@@ -138,7 +138,7 @@ Router\get_action('config', function() {
 // Update preferences
 Router\post_action('config', function() {
 
-    $values = Request\values() + array('nocontent' => 0, 'image_proxy' => 0, 'favicons' => 0);
+    $values = Request\values() + array('nocontent' => 0, 'image_proxy' => 0, 'favicons' => 0, 'debug_mode' => 0, 'original_marks_read' => 0);
     Model\Config\check_csrf_values($values);
     list($valid, $errors) = Model\Config\validate_modification($values);
 
@@ -170,6 +170,22 @@ Router\post_action('config', function() {
         'menu' => 'config',
         'title' => t('Preferences')
     )));
+});
+
+Router\post_action('get-config', function() {
+    $return = array();
+    $options = Request\values();
+
+    if (empty($options)) {
+        $return = Model\Config\get_all();
+    }
+    else {
+        foreach ($options as $name) {
+            $return[$name] = Model\Config\get($name);
+        }
+    }
+
+    Response\json($return);
 });
 
 // Display help page

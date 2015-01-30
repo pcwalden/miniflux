@@ -64,14 +64,29 @@ function get_everything_since($timestamp)
         ->findAll();
 }
 
+function get_latest_feeds_items()
+{
+    return Database::get('db')
+        ->table('feeds')
+        ->columns(
+            'feeds.id',
+            'MAX(items.updated) as updated',
+            'items.status'
+        )
+        ->join('items', 'feed_id', 'id')
+        ->groupBy('feeds.id')
+        ->orderBy('feeds.id')
+        ->findAll();
+}
+
 // Get a list of [item_id => status,...]
 function get_all_status()
 {
     return Database::get('db')
-        ->table('items')
+        ->hashtable('items')
         ->in('status', array('read', 'unread'))
         ->orderBy('updated', 'desc')
-        ->hashmap('id', 'status');
+        ->getAll('id', 'status');
 }
 
 // Get all items by status

@@ -36,6 +36,10 @@ function get_reader_config()
         $config->setFilterImageProxyUrl('?action=proxy&url=%s');
     }
 
+    if ((bool) get('debug_mode')) {
+        Logger::enable();
+    }
+
     // Parser
     $config->setParserHashAlgo('crc32b');
 
@@ -64,7 +68,7 @@ function debug($line)
 // Write PicoFeed debug output to a file
 function write_debug()
 {
-    if (DEBUG) {
+    if ((bool) get('debug_mode')) {
         file_put_contents(DEBUG_FILENAME, implode(PHP_EOL, Logger::getMessages()));
     }
 }
@@ -219,7 +223,7 @@ function check_csrf($token)
 function generate_token()
 {
     if (function_exists('openssl_random_pseudo_bytes')) {
-        return bin2hex(\openssl_random_pseudo_bytes(25));
+        return bin2hex(openssl_random_pseudo_bytes(25));
     }
     else if (ini_get('open_basedir') === '' && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
         return hash('sha256', file_get_contents('/dev/urandom', false, null, 0, 30));
@@ -238,14 +242,14 @@ function new_tokens()
         'fever_token' => substr(generate_token(), 0, 8),
     );
 
-    return Database::get('db')->table('config')->update($values);
+    return Database::get('db')->hashtable('settings')->put($values);
 }
 
 // Get a config value from the DB or from the session
 function get($name)
 {
     if (! isset($_SESSION)) {
-        return Database::get('db')->table('config')->findOneColumn($name);
+        return current(Database::get('db')->hashtable('settings')->get($name));
     }
     else {
 
@@ -264,9 +268,7 @@ function get($name)
 // Get all config parameters
 function get_all()
 {
-    $config = Database::get('db')
-        ->table('config')
-        ->findOne();
+    $config = Database::get('db')->hashtable('settings')->get();
 
     unset($config['password']);
 
@@ -284,6 +286,11 @@ function validate_modification(array $values)
         new Validators\Required('items_per_page', t('Value required')),
         new Validators\Integer('items_per_page', t('Must be an integer')),
         new Validators\Required('theme', t('Value required')),
+        new Validators\Integer('frontend_updatecheck_interval', t('Must be an integer')),
+        new Validators\Integer('debug_mode', t('Must be an integer')),
+        new Validators\Integer('nocontent', t('Must be an integer')),
+        new Validators\Integer('favicons', t('Must be an integer')),
+        new Validators\Integer('original_marks_read', t('Must be an integer')),
     );
 
     if (ENABLE_AUTO_UPDATE) {
@@ -322,7 +329,7 @@ function save(array $values)
         Database::get('db')->table('items')->update(array('content' => ''));
     }
 
-    if (Database::get('db')->table('config')->update($values)) {
+    if (Database::get('db')->hashtable('settings')->put($values)) {
         reload();
         return true;
     }

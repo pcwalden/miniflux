@@ -26,6 +26,7 @@ Router\get_action('unread', function() {
 
     Response\html(Template\layout('unread_items', array(
         'favicons' => Model\Feed\get_item_favicons($items),
+        'original_marks_read' => Model\Config\get('original_marks_read'),
         'order' => $order,
         'direction' => $direction,
         'display_mode' => Model\Config\get('items_display_mode'),
@@ -89,6 +90,7 @@ Router\get_action('feed-items', function() {
 
     Response\html(Template\layout('feed_items', array(
         'favicons' => Model\Feed\get_favicons(array($feed['id'])),
+        'original_marks_read' => Model\Config\get('original_marks_read'),
         'order' => $order,
         'direction' => $direction,
         'display_mode' => Model\Config\get('items_display_mode'),
@@ -199,4 +201,22 @@ Router\get_action('mark-item-removed', function() {
     Model\Item\set_removed($id);
 
     Response\Redirect('?action='.$redirect.'&offset='.$offset.'&feed_id='.$feed_id);
+});
+
+Router\post_action('latest-feeds-items', function() {
+    $items = Model\Item\get_latest_feeds_items();
+    $nb_unread_items = Model\Item\count_by_status('unread');
+
+    $feeds = array_reduce($items, function ($result, $item) {
+        $result[$item['id']] = array(
+            'time' => $item['updated'] ?: 0,
+            'status' => $item['status']
+        );
+        return $result;
+    }, array());
+
+    Response\json(array(
+        'feeds' => $feeds,
+        'nbUnread' => $nb_unread_items
+    ));
 });

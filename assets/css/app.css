@@ -163,6 +163,7 @@ input[type="checkbox"] {
 input[type="email"],
 input[type="tel"],
 input[type="password"],
+input[type="number"],
 input[type="text"] {
     border: 1px solid #ccc;
     padding: 3px;
@@ -176,12 +177,17 @@ input[type="text"] {
 input[type="email"]:focus,
 input[type="tel"]:focus,
 input[type="password"]:focus,
+input[type="number"]:focus,
 input[type="text"]:focus,
 textarea:focus {
     color: #000;
     border-color: rgba(82, 168, 236, 0.8);
     outline: 0;
     box-shadow: 0 0 8px rgba(82, 168, 236, 0.6);
+}
+
+input[type="number"] {
+    width: 40px;
 }
 
 textarea {
@@ -751,6 +757,20 @@ iframe {
 .bookmarklet:focus,
 .bookmarklet:hover {
     color: #339966;
+}
+
+#config-form {
+    border-left: none;
+    padding: 0;
+}
+
+#config-form h3 {
+    border-bottom: 1px dotted #ccc;
+}
+
+.options {
+    border-left: 3px dotted #eee;
+    padding-left: 20px;
 }
 
 /* desktop design */
