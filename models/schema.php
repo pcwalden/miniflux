@@ -5,7 +5,17 @@ namespace Schema;
 use PDO;
 use Model\Config;
 
-const VERSION = 38;
+const VERSION = 40;
+
+function version_40($pdo)
+{
+    $pdo->exec('UPDATE settings SET "value"="https://github.com/miniflux/miniflux/archive/master.zip" WHERE "key"="auto_update_url"');
+}
+
+function version_39($pdo)
+{
+    $pdo->exec('ALTER TABLE feeds ADD COLUMN cloak_referrer INTEGER DEFAULT 0');
+}
 
 function version_38($pdo)
 {
