@@ -63,9 +63,9 @@ class Item
      * Item date
      *
      * @access public
-     * @var integer
+     * @var \DateTime
      */
-    public $date = 0;
+    public $date = null;
 
     /**
      * Item content
@@ -100,6 +100,47 @@ class Item
     public $language = '';
 
     /**
+     * Raw XML
+     *
+     * @access public
+     * @var \SimpleXMLElement
+     */
+    public $xml;
+
+    /**
+     * List of namespaces
+     *
+     * @access public
+     * @var array
+     */
+    public $namespaces = array();
+
+    /**
+     * Get specific XML tag or attribute value
+     *
+     * @access public
+     * @param  string  $tag           Tag name (examples: guid, media:content)
+     * @param  string  $attribute     Tag attribute
+     * @return string
+     */
+    public function getTag($tag, $attribute = '')
+    {
+        // Get namespaced value
+        if (strpos($tag, ':') !== false) {
+            list(,$tag) = explode(':', $tag);
+            return XmlParser::getNamespaceValue($this->xml, $this->namespaces, $tag, $attribute);
+        }
+
+        // Return attribute value
+        if (! empty($attribute)) {
+            return (string) $this->xml->{$tag}[$attribute];
+        }
+
+        // Return tag content
+        return (string) $this->xml->$tag;
+    }
+
+    /**
      * Return item information
      *
      * @access public
@@ -109,10 +150,11 @@ class Item
     {
         $output = '';
 
-        foreach (array('id', 'title', 'url', 'date', 'language', 'author', 'enclosure_url', 'enclosure_type') as $property) {
+        foreach (array('id', 'title', 'url', 'language', 'author', 'enclosure_url', 'enclosure_type') as $property) {
             $output .= 'Item::'.$property.' = '.$this->$property.PHP_EOL;
         }
 
+        $output .= 'Item::date = '.$this->date->format(DATE_RFC822).PHP_EOL;
         $output .= 'Item::isRTL() = '.($this->isRTL() ? 'true' : 'false').PHP_EOL;
         $output .= 'Item::content = '.strlen($this->content).' bytes'.PHP_EOL;
 

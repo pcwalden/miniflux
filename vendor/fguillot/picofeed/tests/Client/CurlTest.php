@@ -6,6 +6,9 @@ use PHPUnit_Framework_TestCase;
 
 class CurlTest extends PHPUnit_Framework_TestCase
 {
+    /**
+     * @group online
+     */
     public function testDownload()
     {
         $client = new Curl;
@@ -18,20 +21,23 @@ class CurlTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('text/html; charset=utf-8', $result['headers']['Content-Type']);
     }
 
-//    // disabled due to https://github.com/sebastianbergmann/phpunit/issues/1452
-//    /**
-//     * @runInSeparateProcess
-//     */
-//    public function testPassthrough()
-//    {
-//        $client = new Curl;
-//        $client->setUrl('http://miniflux.net/favicon.ico');
-//        $client->enablePassthroughMode();
-//        $client->doRequest();
-//
-//        $this->expectOutputString('no_to_be_defined');
-//    }
+    /**
+     * @runInSeparateProcess
+     * @group online
+     */
+    public function testPassthrough()
+    {
+        $client = new Curl;
+        $client->setUrl('http://miniflux.net/favicon.ico');
+        $client->enablePassthroughMode();
+        $client->doRequest();
 
+        $this->expectOutputString(file_get_contents('tests/fixtures/miniflux_favicon.ico'));
+    }
+
+    /**
+     * @group online
+     */
     public function testRedirect()
     {
         $client = new Curl;
@@ -47,6 +53,7 @@ class CurlTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException PicoFeed\Client\InvalidCertificateException
+     * @group online
      */
     public function testSSL()
     {

@@ -131,22 +131,31 @@ class Atom extends Parser
      */
     public function findFeedDate(SimpleXMLElement $xml, Feed $feed)
     {
-        $feed->date = $this->date->getTimestamp((string) $xml->updated);
+        $feed->date = $this->date->getDateTime((string) $xml->updated);
     }
 
     /**
      * Find the item date
      *
      * @access public
-     * @param  SimpleXMLElement   $entry   Feed item
-     * @param  Item               $item    Item object
+     * @param  SimpleXMLElement          $entry   Feed item
+     * @param  Item                      $item    Item object
+     * @param  \PicoFeed\Parser\Feed     $feed    Feed object
      */
-    public function findItemDate(SimpleXMLElement $entry, Item $item)
+    public function findItemDate(SimpleXMLElement $entry, Item $item, Feed $feed)
     {
-        $published = isset($entry->published) ? $this->date->getTimestamp((string) $entry->published) : 0;
-        $updated = isset($entry->updated) ? $this->date->getTimestamp((string) $entry->updated) : 0;
+        $published = isset($entry->published) ? $this->date->getDateTime((string) $entry->published) : null;
+        $updated = isset($entry->updated) ? $this->date->getDateTime((string) $entry->updated) : null;
 
-        $item->date = max($published, $updated) ?: time();
+        if ($published === null && $updated === null) {
+            $item->date = $feed->getDate();          // We use the feed date if there is no date for the item
+        }
+        else if ($published !== null && $updated !== null) {
+            $item->date = max($published, $updated); // We use the most recent date between published and updated
+        }
+        else {
+            $item->date = $updated ?: $published;
+        }
     }
 
     /**

@@ -153,6 +153,9 @@ abstract class Parser
         foreach ($this->getItemsTree($xml) as $entry) {
 
             $item = new Item;
+            $item->xml = $entry;
+            $item->namespaces = $this->namespaces;
+
             $this->findItemAuthor($xml, $entry, $item);
 
             $this->findItemUrl($entry, $item);
@@ -164,7 +167,7 @@ abstract class Parser
             // Id generation can use the item url/title/content (order is important)
             $this->findItemId($entry, $item, $feed);
 
-            $this->findItemDate($entry, $item);
+            $this->findItemDate($entry, $item, $feed);
             $this->findItemEnclosure($entry, $item, $feed);
             $this->findItemLanguage($entry, $item, $feed);
 
@@ -333,7 +336,7 @@ abstract class Parser
         if ($timezone) {
             $this->date->timezone = $timezone;
         }
-        
+
         return $this;
     }
 
@@ -532,9 +535,10 @@ abstract class Parser
      *
      * @access public
      * @param  SimpleXMLElement          $entry   Feed item
-     * @param  \PicoFeed\Parser\Item     $item    Item object
+     * @param  Item                      $item    Item object
+     * @param  \PicoFeed\Parser\Feed     $feed    Feed object
      */
-    public abstract function findItemDate(SimpleXMLElement $entry, Item $item);
+    public abstract function findItemDate(SimpleXMLElement $entry, Item $item, Feed $feed);
 
     /**
      * Find the item content

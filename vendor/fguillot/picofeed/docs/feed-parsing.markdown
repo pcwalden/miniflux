@@ -45,23 +45,23 @@ Feed::id = tag:linuxfr.org,2005:/news
 Feed::title = LinuxFr.org : les dépêches
 Feed::feed_url = http://linuxfr.org/news.atom
 Feed::site_url = http://linuxfr.org/news
-Feed::date = 1415138079
 Feed::language = en-US
 Feed::description =
 Feed::logo =
-Feed::items = 15 items
+Feed::date = Thu, 26 Feb 15 09:33:08 +0100
 Feed::isRTL() = false
+Feed::items = 15 items
 ----
-Item::id = 38d8f48284fb03940cbb3aff9101089b81e44efb1281641bdd7c3e7e4bf3b0cd
-Item::title = openSUSE 13.2 : nouvelle version du caméléon disponible !
-Item::url = http://linuxfr.org/news/opensuse-13-2-nouvelle-version-du-cameleon-disponible
-Item::date = 1415122640
+Item::id = 56198c98ae852d21c369bfb5ffbc2ad13db2f3227236dde3e21ca1a9eb943faf
+Item::title = Les brevets logiciels : un frein à l'innovation et la recherche (un nouvel exemple aux États-Unis)
+Item::url = http://linuxfr.org/news/les-brevets-logiciels-un-frein-a-l-innovation-et-la-recherche-un-nouvel-exemple-aux-etats-unis
 Item::language = en-US
-Item::author = Syvolc
+Item::author = alenvers
 Item::enclosure_url =
 Item::enclosure_type =
+Item::date = Thu, 26 Feb 15 09:33:08 +0100
 Item::isRTL() = false
-Item::content = 18307 bytes
+Item::content = 6452 bytes
 ....
 ```
 
@@ -186,7 +186,7 @@ $feed->getId();              // Unique feed id
 $feed->getTitle();           // Feed title
 $feed->getFeedUrl();         // Feed url
 $feed->getSiteUrl();         // Website url
-$feed->getDate();            // Feed last updated date
+$feed->getDate();            // Feed last updated date (DateTime object)
 $feed->getLanguage();        // Feed language
 $feed->getDescription();     // Feed description
 $feed->getLogo();            // Feed logo (can be a large image, different from icon)
@@ -196,13 +196,52 @@ $feed->getItems();           // List of item objects
 $feed->items[0]->getId();                      // Item unique id (hash)
 $feed->items[0]->getTitle();                   // Item title
 $feed->items[0]->getUrl();                     // Item url
-$feed->items[0]->getDate();                    // Item published date (timestamp)
+$feed->items[0]->getDate();                    // Item published date (DateTime object)
 $feed->items[0]->getLanguage();                // Item language
 $feed->items[0]->getAuthor();                  // Item author
 $feed->items[0]->getEnclosureUrl();            // Enclosure url
 $feed->items[0]->getEnclosureType();           // Enclosure mime-type (audio/mp3, image/png...)
 $feed->items[0]->getContent();                 // Item content (filtered or raw)
 $feed->items[0]->isRTL();                      // Return true if the item language is Right-To-Left
+```
+
+Get raw XML tags/attributes or non standard tags for items
+----------------------------------------------------------
+
+Get the original `guid` tag for RSS 2.0 feeds:
+
+```php
+echo $feed->items[0]->getTag('guid');
+```
+
+Get a specific attribute value:
+
+```php
+echo $feed->items[1]->getTag('category', 'term');
+```
+
+Get value of namespaced tag:
+
+```php
+echo $feed->items[1]->getTag('wfw:commentRss');
+```
+
+Get attribute value of a namespaced tag:
+
+```php
+echo $feed->items[0]->getTag('media:content', 'url');
+```
+
+Get the xml of the item (returns a SimpleXMLElement instance):
+
+```php
+$simplexml = $feed->items[0]->xml;
+```
+
+Get the list of namespaces:
+
+```php
+print_r($feed->items[0]->namespaces);
 ```
 
 RTL language detection

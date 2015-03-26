@@ -2,7 +2,7 @@
 
 namespace PicoFeed\Filter;
 
-use \PicoFeed\Client\Url;
+use PicoFeed\Client\Url;
 
 /**
  * Attribute Filter class
@@ -215,7 +215,8 @@ class Attribute
      * @var array
      */
     private $add_attributes = array(
-        'a' => array('rel' => 'noreferrer', 'target' => '_blank')
+        'a' => array('rel' => 'noreferrer', 'target' => '_blank'),
+        'video' => array('controls' => 'true'),
     );
 
     /**
@@ -233,6 +234,7 @@ class Attribute
         'filterBlacklistResourceAttribute',
         'filterProtocolUrlAttribute',
         'rewriteImageProxyUrl',
+        'secureIframeSrc',
     );
 
     /**
@@ -378,6 +380,25 @@ class Attribute
     {
         if ($this->isResource($attribute)) {
             $value = Url::resolve($value, $this->website);
+        }
+
+        return true;
+    }
+
+    /**
+     * Turns iframes' src attribute from http to https to prevent
+     * mixed active content
+     *
+     * @access public
+     * @param  string    $tag            Tag name
+     * @param  array     $attribute      Atttributes name
+     * @param  string    $value          Attribute value
+     * @return boolean
+     */
+    public function secureIframeSrc($tag, $attribute, &$value)
+    {
+        if ($tag === 'iframe' && $attribute === 'src' && strpos($value, 'http://') === 0) {
+            $value = substr_replace($value, 's', 4, 0);
         }
 
         return true;
