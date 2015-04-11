@@ -21,7 +21,9 @@ function get_reader_config()
     // Client
     $config->setClientTimeout(HTTP_TIMEOUT);
     $config->setClientUserAgent(HTTP_USER_AGENT);
-    $config->setGrabberUserAgent(HTTP_USER_AGENT);
+
+    // Grabber
+    $config->setGrabberRulesFolder(RULES_DIRECTORY);
 
     // Proxy
     $config->setProxyHostname(PROXY_HOSTNAME);

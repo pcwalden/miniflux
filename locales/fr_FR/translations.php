@@ -230,4 +230,12 @@ return array(
     'Enable debug mode' => 'Activer le mode debug',
     'Original link marks article as read' => 'Marquer les articles comme lu lors d\'un clic sur le lien original',
     'Cloak the image referrer' => 'Falsifier le référent pour les images',
+    'This subscription already exists.' => 'Cet abonnement existe déjà.',
+    'Connection timeout.' => 'Délai de connexion expiré.',
+    'Error occured.' => 'Une erreur est survenue.',
+    'Feed is malformed.' => 'Le flux XML est mal-formé.',
+    'Invalid SSL certificate.' => 'Le certificat SSL est invalide.',
+    'Maximum number of HTTP redirections exceeded.' => 'Nombre maximal de redirections HTTP dépassé.',
+    'The content size exceeds to maximum allowed size.' => 'La taille du contenu dépasse la taille maximale autorisée.',
+    'Unable to detect the feed format.' => 'Impossible de détecter le format du flux.',
 );

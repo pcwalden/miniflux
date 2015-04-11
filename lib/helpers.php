@@ -2,7 +2,7 @@
 
 namespace Helper;
 
-function isSecureConnection()
+function is_secure_connection()
 {
     return ! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 }
@@ -10,7 +10,7 @@ function isSecureConnection()
 /*
  * get Version number from git archive output
  */
-function parseAppVersion($refnames, $commithash)
+function parse_app_version($refnames, $commithash)
 {
     $version = 'master';
 
@@ -38,7 +38,7 @@ function favicon(array $favicons, $feed_id)
     return '';
 }
 
-function isRTL(array $item)
+function is_rtl(array $item)
 {
     return ! empty($item['rtl']) || \PicoFeed\Parser\Parser::isLanguageRTL($item['language']);
 }
@@ -61,7 +61,7 @@ function css()
 
 function get_current_base_url()
 {
-    $url = isSecureConnection() ? 'https://' : 'http://';
+    $url = is_secure_connection() ? 'https://' : 'http://';
     $url .= $_SERVER['SERVER_NAME'];
     $url .= $_SERVER['SERVER_PORT'] == 80 || $_SERVER['SERVER_PORT'] == 443 ? '' : ':'.$_SERVER['SERVER_PORT'];
     $url .= dirname($_SERVER['PHP_SELF']) !== '/' ? dirname($_SERVER['PHP_SELF']).'/' : '/';
