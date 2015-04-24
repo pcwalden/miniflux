@@ -3,7 +3,6 @@
 use PicoFarad\Router;
 use PicoFarad\Response;
 use PicoFarad\Request;
-use PicoFarad\Session;
 use PicoFarad\Template;
 
 // Display unread items
@@ -15,7 +14,7 @@ Router\get_action('unread', function() {
     $order = Request\param('order', 'updated');
     $direction = Request\param('direction', Model\Config\get('items_sorting_direction'));
     $offset = Request\int_param('offset', 0);
-    $items = Model\Item\get_all('unread', $offset, Model\Config\get('items_per_page'), $order, $direction);
+    $items = Model\Item\get_all_by_status('unread', $offset, Model\Config\get('items_per_page'), $order, $direction);
     $nb_items = Model\Item\count_by_status('unread');
 
     if ($nb_items === 0) {
@@ -126,17 +125,6 @@ Router\post_action('download-item', function() {
     Response\json($download);
 });
 
-// Ajax call change item status
-Router\post_action('change-item-status', function() {
-
-    $id = Request\param('id');
-
-    Response\json(array(
-        'item_id' => $id,
-        'status' => Model\Item\switch_status($id)
-    ));
-});
-
 // Ajax call to mark item read
 Router\post_action('mark-item-read', function() {
 
@@ -163,13 +151,6 @@ Router\get_action('mark-all-read', function() {
 
     Model\Item\mark_all_as_read();
     Response\redirect('?action=unread');
-});
-
-// Mark all unread items as read (Ajax request)
-Router\post_action('mark-all-read', function(){
-
-    Model\Item\mark_all_as_read();
-    Response\json(array('OK'));
 });
 
 // Mark all unread items as read for a specific feed
