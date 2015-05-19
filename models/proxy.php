@@ -9,7 +9,7 @@ use PicoFeed\Filter\Filter;
 use PicoFeed\Client\Client;
 use PicoFeed\Logging\Logger;
 
-function addProxyToLink($link)
+function rewrite_link($link)
 {
     if (Helper\is_secure_connection() && strpos($link, 'http:') === 0) {
         $link = '?action=proxy&url='.rawurlencode($link);
@@ -18,7 +18,7 @@ function addProxyToLink($link)
     return $link;
 }
 
-function addProxyToTags($html, $website, $proxy_images, $cloak_referrer)
+function rewrite_html($html, $website, $proxy_images, $cloak_referrer)
 {
     if ($html === '' // no content, no proxy
         || (! $cloak_referrer && ! $proxy_images) // neither cloaking nor proxing enabled
@@ -50,14 +50,18 @@ function addProxyToTags($html, $website, $proxy_images, $cloak_referrer)
 
 function download($url)
 {
-    if ((bool) Config\get('debug_mode')) {
-        Logger::enable();
-    }
+    try {
 
-    $client = Client::getInstance();
-    $client->setUserAgent(Config\HTTP_USER_AGENT);
-    $client->enablePassthroughMode();
-    $client->execute($url);
+        if ((bool) Config\get('debug_mode')) {
+            Logger::enable();
+        }
+
+        $client = Client::getInstance();
+        $client->setUserAgent(Config\HTTP_USER_AGENT);
+        $client->enablePassthroughMode();
+        $client->execute($url);
+    }
+    catch (\PicoFeed\Client\ClientException $e) {}
 
     Config\write_debug();
 }
