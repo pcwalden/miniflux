@@ -152,6 +152,11 @@ class Rss20ParserTest extends PHPUnit_Framework_TestCase
         $feed = $parser->execute();
         $this->assertNotEmpty($feed->items);
         $this->assertEquals('http://www.pcinpact.com/breve/78872-la-dcri-purge-wikipedia-par-menace-bel-effet-streisand-a-cle.htm?utm_source=PCi_RSS_Feed&utm_medium=news&utm_campaign=pcinpact', $feed->items[0]->getUrl());
+
+        $parser = new Rss20(file_get_contents('tests/fixtures/dailymail.co.uk.xml'));
+        $feed = $parser->execute();
+        $this->assertNotEmpty($feed->items);
+        $this->assertEquals('http://www.dailymail.co.uk/sport/sportsnews/article-3146732/Heartbreak-tears-England-Lionesses-crash-Women-s-World-Cup-defender-Laura-Bassett-scores-freak-goal-injury-time-Japan-final.html?ITO=1490&ns_mchannel=rss&ns_campaign=1490', $feed->items[0]->getUrl());
     }
 
     public function testItemTitle()
@@ -256,14 +261,6 @@ class Rss20ParserTest extends PHPUnit_Framework_TestCase
         $feed = $parser->execute();
         $this->assertNotEmpty($feed->items);
         $this->assertEquals('http://geekstammtisch.de/#GST001', $feed->items[1]->getUrl());
-
-        $parser = new Rss20(file_get_contents('tests/fixtures/lincoln_loop.xml'));
-        $feed = $parser->execute();
-        $this->assertNotEmpty($feed->items);
-
-        $parser = new Rss20(file_get_contents('tests/fixtures/next_inpact_full.xml'));
-        $feed = $parser->execute();
-        $this->assertNotEmpty($feed->items);
 
         $parser = new Rss20(file_get_contents('tests/fixtures/jeux-linux.fr.xml'));
         $feed = $parser->execute();
