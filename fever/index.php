@@ -3,6 +3,7 @@
 require '../common.php';
 
 use Model\Feed;
+use Model\Group;
 use Model\Service;
 use PicoDb\Database;
 
@@ -40,7 +41,7 @@ function auth()
         }
     }
 
-    $credentials = Database::get('db')->hashtable('settings')->get('username', 'fever_token');
+    $credentials = Database::getInstance('db')->hashtable('settings')->get('username', 'fever_token');
     $api_key = md5($credentials['username'].':'.$credentials['fever_token']);
 
     $response = array(
@@ -59,23 +60,16 @@ route('groups', function() {
 
     if ($response['auth']) {
 
-        $feed_ids = Database::get('db')
-                        ->table('feeds')
-                        ->findAllByColumn('id');
+        $response['groups'] = Group\get_all();
+        $response['feeds_groups'] = array();
+        $group_map = Group\get_map();
 
-        $response['groups'] = array(
-            array(
-                'id' => 1,
-                'title' => t('All'),
-            )
-        );
-
-        $response['feeds_groups'] = array(
-            array(
-                'group_id' => 1,
-                'feed_ids' => implode(',', $feed_ids),
-            )
-        );
+        foreach ($group_map as $group_id => $feed_ids) {
+            $response['feeds_groups'][] = array(
+                'group_id' => $group_id,
+                'feed_ids' => implode(',', $feed_ids)
+            );
+        }
     }
 
     response($response);
@@ -89,8 +83,9 @@ route('feeds', function() {
     if ($response['auth']) {
 
         $response['feeds'] = array();
+        $response['feeds_groups'] = array();
+
         $feeds = Feed\get_all();
-        $feed_ids = array();
 
         foreach ($feeds as $feed) {
             $response['feeds'][] = array(
@@ -102,16 +97,15 @@ route('feeds', function() {
                 'is_spark' => 0,
                 'last_updated_on_time' => $feed['last_checked'] ?: time(),
             );
-
-            $feed_ids[] = $feed['id'];
         }
 
-        $response['feeds_groups'] = array(
-            array(
-                'group_id' => 1,
-                'feed_ids' => implode(',', $feed_ids),
-            )
-        );
+        $group_map = Group\get_map();
+        foreach ($group_map as $group_id => $feed_ids) {
+            $response['feeds_groups'][] = array(
+                'group_id' => $group_id,
+                'feed_ids' => implode(',', $feed_ids)
+            );
+        }
     }
 
     response($response);
@@ -124,7 +118,7 @@ route('favicons', function() {
 
     if ($response['auth']) {
 
-        $favicons = Database::get('db')
+        $favicons = Database::getInstance('db')
             ->table('favicons')
             ->columns(
                 'feed_id',
@@ -151,7 +145,7 @@ route('items', function() {
 
     if ($response['auth']) {
 
-        $query = Database::get('db')
+        $query = Database::getInstance('db')
                         ->table('items')
                         ->columns(
                             'rowid',
@@ -193,7 +187,7 @@ route('items', function() {
             );
         }
 
-        $response['total_items'] = Database::get('db')
+        $response['total_items'] = Database::getInstance('db')
                                         ->table('items')
                                         ->neq('status', 'removed')
                                         ->count();
@@ -221,7 +215,7 @@ route('unread_item_ids', function() {
 
     if ($response['auth']) {
 
-        $item_ids = Database::get('db')
+        $item_ids = Database::getInstance('db')
                     ->table('items')
                     ->eq('status', 'unread')
                     ->findAllByColumn('rowid');
@@ -239,7 +233,7 @@ route('saved_item_ids', function() {
 
     if ($response['auth']) {
 
-        $item_ids = Database::get('db')
+        $item_ids = Database::getInstance('db')
                     ->table('items')
                     ->eq('bookmark', 1)
                     ->findAllByColumn('rowid');
@@ -257,7 +251,7 @@ route('write_items', function() {
 
     if ($response['auth']) {
 
-        $query = Database::get('db')
+        $query = Database::getInstance('db')
                     ->table('items')
                     ->eq('rowid', $_POST['id']);
 
@@ -265,7 +259,7 @@ route('write_items', function() {
             $query->update(array('bookmark' => 1));
 
             // Send bookmark to third-party services if enabled
-            $item_id = Database::get('db')
+            $item_id = Database::getInstance('db')
                             ->table('items')
                             ->eq('rowid', $_POST['id'])
                             ->findOneColumn('id');
@@ -293,11 +287,11 @@ route('write_feeds', function() {
 
     if ($response['auth']) {
 
-        Database::get('db')
+        Database::getInstance('db')
             ->table('items')
             ->eq('feed_id', $_POST['id'])
             ->lte('updated', $_POST['before'])
-            ->update(array('status' => $_POST['as'] === 'read' ? 'read' : 'unread'));
+            ->update(array('status' => 'read'));
     }
 
     response($response);
@@ -309,11 +303,15 @@ route('write_groups', function() {
     $response = auth();
 
     if ($response['auth']) {
+        $db = Database::getInstance('db')
+                ->table('items')
+                ->lte('updated', $_POST['before']);
 
-        Database::get('db')
-            ->table('items')
-            ->lte('updated', $_POST['before'])
-            ->update(array('status' => $_POST['as'] === 'read' ? 'read' : 'unread'));
+        if ($_POST['id'] > 0) {
+            $db->in('feed_id', Model\Group\get_feeds_by_group($_POST['id']));
+        }
+
+        $db->update(array('status' => 'read'));
     }
 
     response($response);

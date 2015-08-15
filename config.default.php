@@ -3,6 +3,9 @@
 // HTTP_TIMEOUT => default value is 20 seconds (Maximum time to fetch a feed)
 define('HTTP_TIMEOUT', '20');
 
+// HTTP_MAX_RESPONSE_SIZE => Maximum accepted size of the response body in MB (default 2MB)
+define('HTTP_MAX_RESPONSE_SIZE', 2097152);
+
 // DATA_DIRECTORY => default is data (writable directory)
 define('DATA_DIRECTORY', __DIR__.'/data');
 
@@ -35,3 +38,7 @@ define('PROXY_PASSWORD', '');
 
 // ENABLE_AUTO_UPDATE => default is true (enable Miniflux update from the user interface)
 define('ENABLE_AUTO_UPDATE', true);
+
+// SUBSCRIPTION_CONCURRENT_REQUESTS => number of concurrent feeds to refresh at once
+// Reduce this number on systems with limited processing power
+define('SUBSCRIPTION_CONCURRENT_REQUESTS', 5);

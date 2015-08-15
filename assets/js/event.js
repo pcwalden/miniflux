@@ -64,7 +64,7 @@ Miniflux.Event = (function() {
 
                     switch (action) {
                         case 'refresh-all':
-                            Miniflux.Feed.UpdateAll();
+                            Miniflux.Feed.UpdateAll(e.target.getAttribute("data-concurrent-requests"));
                             break;
                         case 'refresh-feed':
                             currentItem && Miniflux.Feed.Update(currentItem);
@@ -85,7 +85,9 @@ Miniflux.Event = (function() {
                             currentItem && Miniflux.Item.DownloadContent(currentItem);
                             break;
                         case 'mark-feed-read':
-                            Miniflux.Item.MarkFeedAsRead(e.target.getAttribute("data-feed-id"));
+                            var feed_id = document.getElementById('listing').getAttribute('data-feed-id');
+
+                            Miniflux.Item.MarkFeedAsRead(feed_id);
                             break;
                     }
                 }
