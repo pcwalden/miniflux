@@ -1,7 +1,7 @@
 Contributors
 ============
 
-Original author: Frédéric Guillot
+Original author: [Frédéric Guillot](https://github.com/fguillot)
 
 List of contributors:
 
@@ -33,6 +33,7 @@ List of contributors:
 - [Mathias Kresin](https://github.com/mkresin)
 - [Maxime](https://github.com/EpocDotFr)
 - [Meradoou](https://github.com/meradoou)
+- [Michael Nordmeyer](https://github.com/michaelnordmeyer)
 - [Miloš Jovanović](https://github.com/mrjovanovic)
 - [MonsieurPaulLeBoulanger](https://github.com/MonsieurPaulLeBoulanger)
 - [Necku](https://github.com/Necku)

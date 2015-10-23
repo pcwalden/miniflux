@@ -1,4 +1,5 @@
 <?php
+
 return array(
     'grabber' => array(
         '%.*%' => array(
@@ -9,9 +10,11 @@ return array(
             'strip' => array(
                 '//*[@class="bucket img"]',
                 '//*[@class="creditwrap"]',
+                '//*[@class="credit"]',
                 '//*[@class="captionwrap"]',
+                '//*[@class="toggle-caption"]',
                 '//*[contains(@class, "enlargebtn")]',
             ),
-        )
-    )
+        ),
+    ),
 );
