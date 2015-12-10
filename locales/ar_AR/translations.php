@@ -240,4 +240,6 @@ return array(
     // 'Unable to detect the feed format.' => '',
     // 'add a new group' => '',
     // 'Groups' => '',
+    // 'Back to the group' => '',
+    // 'view' => '',
 );

@@ -240,4 +240,6 @@ return array(
     'Unable to detect the feed format.' => 'Nelze detekovat formát odběru.',
     'add a new group' => 'přidat novou skupinu',
     'Groups' => 'Skupiny',
+    // 'Back to the group' => '',
+    // 'view' => '',
 );

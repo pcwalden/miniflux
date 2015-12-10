@@ -13,7 +13,7 @@
         <nav class="top">
             <span class="nav-left">
                 <?php if ($item_nav['previous']): ?>
-                    <a href="?action=show&amp;menu=<?= $menu ?>&amp;id=<?= $item_nav['previous']['id'] ?>" id="previous-item" title="<?= Helper\escape($item_nav['previous']['title']) ?>"><?= t('Previous') ?></a>
+                    <a href="?action=show&amp;menu=<?= $menu ?><?= $group_id ? '&amp;group_id='.$group_id : '' ?>&amp;id=<?= $item_nav['previous']['id'] ?>" id="previous-item" title="<?= Helper\escape($item_nav['previous']['title']) ?>"><?= t('Previous') ?></a>
                 <?php else: ?>
                     <?= t('Previous') ?>
                 <?php endif ?>
@@ -21,7 +21,7 @@
 
             <span class="nav-right">
                 <?php if ($item_nav['next']): ?>
-                    <a href="?action=show&amp;menu=<?= $menu ?>&amp;id=<?= $item_nav['next']['id'] ?>" id="next-item" title="<?= Helper\escape($item_nav['next']['title']) ?>"><?= t('Next') ?></a>
+                    <a href="?action=show&amp;menu=<?= $menu ?><?= $group_id ? '&amp;group_id='.$group_id : '' ?>&amp;id=<?= $item_nav['next']['id'] ?>" id="next-item" title="<?= Helper\escape($item_nav['next']['title']) ?>"><?= t('Next') ?></a>
                 <?php else: ?>
                     <?= t('Next') ?>
                 <?php endif ?>
@@ -46,6 +46,11 @@
             <li>
                 <a href="?action=feed-items&amp;feed_id=<?= $feed['id'] ?>"><?= Helper\escape($feed['title']) ?></a>
             </li>
+            <?php if (!empty($item['author'])): ?>
+                <li>
+                    <?= Helper\escape($item['author']) ?>
+                </li>
+            <?php endif ?>
             <li class="hide-mobile">
                 <span title="<?= dt('%e %B %Y %k:%M', $item['updated']) ?>"><?= Helper\relative_time($item['updated']) ?></span>
             </li>
@@ -62,6 +67,11 @@
                     <a href="#" data-action="download-item"><?= t('download content') ?></a>
                 </span>
             </li>
+            <?php if ($group_id): ?>
+            <li>
+                <a href="?action=unread&amp;group_id=<?= $group_id ?>"><?= t('Back to the group') ?></a>
+            </li>
+            <?php endif; ?>
         </ul>
 
         <div id="item-content" <?= Helper\is_rtl($item + array('rtl' => $feed['rtl']))  ? 'dir="rtl"' : 'dir="ltr"' ?>>
@@ -93,7 +103,7 @@
         <nav class="bottom">
             <span class="nav-left">
                 <?php if ($item_nav['previous']): ?>
-                    <a href="?action=show&amp;menu=<?= $menu ?>&amp;id=<?= $item_nav['previous']['id'] ?>" id="previous-item" title="<?= Helper\escape($item_nav['previous']['title']) ?>"><?= t('Previous') ?></a>
+                    <a href="?action=show&amp;menu=<?= $menu ?><?= $group_id ? '&amp;group_id='.$group_id : '' ?>&amp;id=<?= $item_nav['previous']['id'] ?>" id="previous-item" title="<?= Helper\escape($item_nav['previous']['title']) ?>"><?= t('Previous') ?></a>
                 <?php else: ?>
                     <?= t('Previous') ?>
                 <?php endif ?>
@@ -101,7 +111,7 @@
 
             <span class="nav-right">
                 <?php if ($item_nav['next']): ?>
-                    <a href="?action=show&amp;menu=<?= $menu ?>&amp;id=<?= $item_nav['next']['id'] ?>" id="next-item" title="<?= Helper\escape($item_nav['next']['title']) ?>"><?= t('Next') ?></a>
+                    <a href="?action=show&amp;menu=<?= $menu ?><?= $group_id ? '&amp;group_id='.$group_id : '' ?>&amp;id=<?= $item_nav['next']['id'] ?>" id="next-item" title="<?= Helper\escape($item_nav['next']['title']) ?>"><?= t('Next') ?></a>
                 <?php else: ?>
                     <?= t('Next') ?>
                 <?php endif ?>
