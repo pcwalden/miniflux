@@ -20,13 +20,29 @@ $server->register('app.version', function () {
 // Get all feeds
 $server->register('feed.list', function () {
 
-    return Model\Feed\get_all();
+    $feeds = Model\Feed\get_all();
+    if (!$feeds) {
+        return $feeds;
+    }
+    $groups = Model\Group\get_feeds_map();
+    foreach ($feeds as &$feed) {
+        $feed_id = $feed['id'];
+        $feed['feed_group_ids'] = array();
+        if (isset($groups[$feed_id])) {
+            $feed['feed_group_ids'] = $groups[$feed_id];
+        }
+    }
+
+    return $feeds;
 });
 
 // Get one feed
 $server->register('feed.info', function ($feed_id) {
 
-    return Model\Feed\get($feed_id);
+    $result = Model\Feed\get($feed_id);
+    $result['feed_group_ids'] = Model\Group\get_feed_group_ids($feed_id);
+    
+    return $result;
 });
 
 // Add a new feed
@@ -75,6 +91,12 @@ $server->register('feed.disable', function($feed_id) {
 $server->register('feed.update', function($feed_id) {
 
     return Model\Feed\refresh($feed_id);
+});
+
+// Get all groups
+$server->register('group.list', function () {
+
+    return Model\Group\get_all();
 });
 
 // Get all items for a specific feed

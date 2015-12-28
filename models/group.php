@@ -48,6 +48,24 @@ function get_map()
 }
 
 /**
+ * Get assoc array of feeds ids with assigned groups ids
+ *
+ * @return array
+ */
+function get_feeds_map()
+{
+    $result = Database::getInstance('db')
+            ->table('feeds_groups')
+            ->findAll();
+    $map = array();
+    foreach ($result as $row) {
+        $map[$row['feed_id']][] = $row['group_id'];
+    }
+
+    return $map;
+}
+
+/**
  * Get all groups assigned to feed
  *
  * @param integer $feed_id id of the feed
