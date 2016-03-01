@@ -39,6 +39,7 @@ Router\get_action('unread', function() {
         'order' => $order,
         'direction' => $direction,
         'display_mode' => Model\Config\get('items_display_mode'),
+        'item_title_link' => Model\Config\get('item_title_link'),
         'group_id' => $group_id,
         'items' => $items,
         'nb_items' => $nb_items,
@@ -121,6 +122,7 @@ Router\get_action('feed-items', function() {
         'nb_unread_items' => Model\Item\count_by_status('unread'),
         'offset' => $offset,
         'items_per_page' => Model\Config\get('items_per_page'),
+        'item_title_link' => Model\Config\get('item_title_link'),
         'menu' => 'feed-items',
         'title' => '('.$nb_items.') '.$feed['title']
     )));
