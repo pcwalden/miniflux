@@ -4,6 +4,7 @@ namespace Model\Proxy;
 
 use Helper;
 use Model\Config;
+use PicoFeed\Client\ClientException;
 use PicoFeed\Config\Config as PicoFeedConfig;
 use PicoFeed\Filter\Filter;
 use PicoFeed\Client\Client;
@@ -34,8 +35,7 @@ function rewrite_html($html, $website, $proxy_images, $cloak_referrer)
         // image proxy mode only: https links do not need to be proxied, since
         // they do not trigger mixed content warnings.
         $config->setFilterImageProxyProtocol('http');
-    }
-    elseif (! $proxy_images && $cloak_referrer && Helper\is_secure_connection()) {
+    } elseif (! $proxy_images && $cloak_referrer && Helper\is_secure_connection()) {
         // cloaking mode only: if a request from a HTTPS connection to a HTTP
         // connection is made, the referrer will be omitted by the browser.
         // Only the referrer for HTTPS to HTTPs requests needs to be cloaked.
@@ -51,7 +51,6 @@ function rewrite_html($html, $website, $proxy_images, $cloak_referrer)
 function download($url)
 {
     try {
-
         if ((bool) Config\get('debug_mode')) {
             Logger::enable();
         }
@@ -60,8 +59,8 @@ function download($url)
         $client->setUserAgent(Config\HTTP_USER_AGENT);
         $client->enablePassthroughMode();
         $client->execute($url);
+    } catch (ClientException $e) {
     }
-    catch (\PicoFeed\Client\ClientException $e) {}
 
     Config\write_debug();
 }

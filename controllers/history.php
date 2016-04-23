@@ -1,11 +1,11 @@
 <?php
 
 // Display history page
-Router\get_action('history', function() {
-
+Router\get_action('history', function () {
     $offset = Request\int_param('offset', 0);
     $group_id = Request\int_param('group_id', null);
     $feed_ids = array();
+    
     if (! is_null($group_id)) {
         $feed_ids = Model\Group\get_feeds_by_group($group_id);
     }
@@ -42,8 +42,9 @@ Router\get_action('history', function() {
 });
 
 // Confirmation box to flush history
-Router\get_action('confirm-flush-history', function() {
+Router\get_action('confirm-flush-history', function () {
     $group_id = Request\int_param('group_id', null);
+    
     Response\html(Template\layout('confirm_flush_items', array(
         'group_id' => $group_id,
         'nb_unread_items' => Model\Item\count_by_status('unread'),
@@ -53,12 +54,14 @@ Router\get_action('confirm-flush-history', function() {
 });
 
 // Flush history
-Router\get_action('flush-history', function() {
+Router\get_action('flush-history', function () {
     $group_id = Request\int_param('group_id', null);
+    
     if (!is_null($group_id)) {
         Model\Item\mark_group_as_removed($group_id);
     } else {
         Model\Item\mark_all_as_removed();
     }
+    
     Response\redirect('?action=history');
 });

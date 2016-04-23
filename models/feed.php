@@ -2,6 +2,10 @@
 
 namespace Model\Feed;
 
+use PicoFeed\Serialization\Subscription;
+use PicoFeed\Serialization\SubscriptionList;
+use PicoFeed\Serialization\SubscriptionListBuilder;
+use PicoFeed\Serialization\SubscriptionListParser;
 use UnexpectedValueException;
 use Model\Config;
 use Model\Item;
@@ -11,11 +15,8 @@ use Helper;
 use SimpleValidator\Validator;
 use SimpleValidator\Validators;
 use PicoDb\Database;
-use PicoFeed\Serialization\Export;
-use PicoFeed\Serialization\Import;
 use PicoFeed\Reader\Reader;
 use PicoFeed\PicoFeedException;
-use PicoFeed\Client\InvalidUrlException;
 
 const LIMIT_ALL = -1;
 
@@ -53,43 +54,61 @@ function update(array $values)
 // Export all feeds
 function export_opml()
 {
-    $opml = new Export(get_all());
-    return $opml->execute();
+    $feeds = get_all();
+    $subscriptionList = SubscriptionList::create()->setTitle(t('Subscriptions'));
+
+    foreach ($feeds as $feed) {
+        $groups = Group\get_feed_groups($feed['id']);
+        $category = '';
+
+        if (!empty($groups)) {
+            $category = $groups[0]['title'];
+        }
+
+        $subscriptionList->addSubscription(Subscription::create()
+            ->setTitle($feed['title'])
+            ->setSiteUrl($feed['site_url'])
+            ->setFeedUrl($feed['feed_url'])
+            ->setCategory($category)
+        );
+    }
+
+    return SubscriptionListBuilder::create($subscriptionList)->build();
 }
 
 // Import OPML file
 function import_opml($content)
 {
-    $import = new Import($content);
-    $feeds = $import->execute();
+    $subscriptionList = SubscriptionListParser::create($content)->parse();
 
-    if ($feeds) {
+    $db = Database::getInstance('db');
+    $db->startTransaction();
 
-        $db = Database::getInstance('db');
-        $db->startTransaction();
+    foreach ($subscriptionList->subscriptions as $subscription) {
+        if (! $db->table('feeds')->eq('feed_url', $subscription->getFeedUrl())->exists()) {
+            $db->table('feeds')->insert(array(
+                'title' => $subscription->getTitle(),
+                'site_url' => $subscription->getSiteUrl(),
+                'feed_url' => $subscription->getFeedUrl(),
+            ));
 
-        foreach ($feeds as $feed) {
+            if ($subscription->getCategory() !== '') {
+                $feed_id = $db->getLastId();
+                $group_id = Group\get_group_id($subscription->getCategory());
 
-            if (! $db->table('feeds')->eq('feed_url', $feed->feed_url)->count()) {
+                if (empty($group_id)) {
+                    $group_id = Group\create($subscription->getCategory());
+                }
 
-                $db->table('feeds')->save(array(
-                    'title' => $feed->title,
-                    'site_url' => $feed->site_url,
-                    'feed_url' => $feed->feed_url
-                ));
+                Group\add($feed_id, array($group_id));
             }
         }
-
-        $db->closeTransaction();
-
-        Config\write_debug();
-
-        return true;
     }
 
+    $db->closeTransaction();
     Config\write_debug();
 
-    return false;
+    return true;
 }
 
 // Add a new feed from an URL
@@ -162,7 +181,6 @@ function refresh_all($limit = LIMIT_ALL)
 function refresh($feed_id)
 {
     try {
-
         $feed = get($feed_id);
 
         if (empty($feed)) {
@@ -182,7 +200,6 @@ function refresh($feed_id)
 
         // Feed modified
         if ($resource->isModified()) {
-
             $parser = $reader->getParser(
                 $resource->getUrl(),
                 $resource->getContent(),
@@ -190,7 +207,6 @@ function refresh($feed_id)
             );
 
             if ($feed['download_content']) {
-
                 $parser->enableContentGrabber();
 
                 // Don't fetch previous items, only new one
@@ -211,8 +227,7 @@ function refresh($feed_id)
         Config\write_debug();
 
         return true;
-    }
-    catch (PicoFeedException $e) {
+    } catch (PicoFeedException $e) {
     }
 
     update_parsing_error($feed_id, 1);
@@ -286,7 +301,6 @@ function count_items($feed_id)
     );
 
     foreach ($counts as &$count) {
-
         if ($count['status'] === 'unread') {
             $result['items_unread'] = (int) $count['item_count'];
         }
@@ -339,7 +353,7 @@ function update_cache($feed_id, $last_modified, $etag)
 function remove($feed_id)
 {
     Group\remove_all($feed_id);
-    
+
     // Items are removed by a sql constraint
     $result = Database::getInstance('db')->table('feeds')->eq('id', $feed_id)->remove();
     Favicon\purge_favicons();

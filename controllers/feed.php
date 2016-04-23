@@ -1,16 +1,16 @@
 <?php
 
-// Refresh all feeds, used when Javascript is disabled
-Router\get_action('refresh-all', function() {
+use PicoFeed\Parser\MalformedXmlException;
 
+// Refresh all feeds, used when Javascript is disabled
+Router\get_action('refresh-all', function () {
     Model\Feed\refresh_all();
     Session\flash(t('Your subscriptions are updated'));
     Response\redirect('?action=unread');
 });
 
 // Edit feed form
-Router\get_action('edit-feed', function() {
-
+Router\get_action('edit-feed', function () {
     $id = Request\int_param('feed_id');
 
     $values = Model\Feed\get($id);
@@ -29,8 +29,7 @@ Router\get_action('edit-feed', function() {
 });
 
 // Submit edit feed form
-Router\post_action('edit-feed', function() {
-
+Router\post_action('edit-feed', function () {
     $values = Request\values();
     $values += array(
         'enabled' => 0,
@@ -47,8 +46,7 @@ Router\post_action('edit-feed', function() {
         if (Model\Feed\update($values)) {
             Session\flash(t('Your subscription has been updated.'));
             Response\redirect('?action=feeds');
-        }
-        else {
+        } else {
             Session\flash_error(t('Unable to edit your subscription.'));
         }
     }
@@ -64,8 +62,7 @@ Router\post_action('edit-feed', function() {
 });
 
 // Confirmation box to remove a feed
-Router\get_action('confirm-remove-feed', function() {
-
+Router\get_action('confirm-remove-feed', function () {
     $id = Request\int_param('feed_id');
 
     Response\html(Template\layout('confirm_remove_feed', array(
@@ -77,14 +74,12 @@ Router\get_action('confirm-remove-feed', function() {
 });
 
 // Remove a feed
-Router\get_action('remove-feed', function() {
-
+Router\get_action('remove-feed', function () {
     $id = Request\int_param('feed_id');
 
     if ($id && Model\Feed\remove($id)) {
         Session\flash(t('This subscription has been removed successfully.'));
-    }
-    else {
+    } else {
         Session\flash_error(t('Unable to remove this subscription.'));
     }
 
@@ -92,8 +87,7 @@ Router\get_action('remove-feed', function() {
 });
 
 // Refresh one feed and redirect to unread items
-Router\get_action('refresh-feed', function() {
-
+Router\get_action('refresh-feed', function () {
     $feed_id = Request\int_param('feed_id');
     $redirect = Request\param('redirect', 'unread');
 
@@ -102,8 +96,7 @@ Router\get_action('refresh-feed', function() {
 });
 
 // Ajax call to refresh one feed
-Router\post_action('refresh-feed', function() {
-
+Router\post_action('refresh-feed', function () {
     $feed_id = Request\int_param('feed_id', 0);
 
     Response\json(array(
@@ -114,7 +107,7 @@ Router\post_action('refresh-feed', function() {
 });
 
 // Display all feeds
-Router\get_action('feeds', function() {
+Router\get_action('feeds', function () {
     $nothing_to_read = Request\int_param('nothing_to_read');
     $nb_unread_items = Model\Item\count_by_status('unread');
 
@@ -135,8 +128,7 @@ Router\get_action('feeds', function() {
 });
 
 // Display form to add one feed
-Router\get_action('add', function() {
-
+Router\get_action('add', function () {
     $values = array(
         'download_content' => 0,
         'rtl' => 0,
@@ -156,14 +148,12 @@ Router\get_action('add', function() {
 });
 
 // Add a feed with the form or directly from the url, it can be used by a bookmarklet by example
-Router\action('subscribe', function() {
-
+Router\action('subscribe', function () {
     if (Request\is_post()) {
         $values = Request\values();
         Model\Config\check_csrf_values($values);
         $url = isset($values['url']) ? $values['url'] : '';
-    }
-    else {
+    } else {
         $values = array();
         $url = Request\param('url');
         $token = Request\param('token');
@@ -191,34 +181,25 @@ Router\action('subscribe', function() {
             $values['feed_group_ids'],
             $values['create_group']
         );
-    }
-    catch (UnexpectedValueException $e) {
+    } catch (UnexpectedValueException $e) {
         $error_message = t('This subscription already exists.');
-    }
-    catch (PicoFeed\Client\InvalidCertificateException $e) {
+    } catch (PicoFeed\Client\InvalidCertificateException $e) {
         $error_message = t('Invalid SSL certificate.');
-    }
-    catch (PicoFeed\Client\InvalidUrlException $e) {
+    } catch (PicoFeed\Client\InvalidUrlException $e) {
         // picoFeed uses this exception for multiple reasons, but doesn't
         // provide an exception code to distinguish what exactly happend here
         $error_message = $e->getMessage();
-    }
-    catch (PicoFeed\Client\MaxRedirectException $e) {
+    } catch (PicoFeed\Client\MaxRedirectException $e) {
         $error_message = t('Maximum number of HTTP redirections exceeded.');
-    }
-    catch (PicoFeed\Client\MaxSizeException $e) {
+    } catch (PicoFeed\Client\MaxSizeException $e) {
         $error_message = t('The content size exceeds to maximum allowed size.');
-    }
-    catch (PicoFeed\Client\TimeoutException $e) {
+    } catch (PicoFeed\Client\TimeoutException $e) {
         $error_message = t('Connection timeout.');
-    }
-    catch (PicoFeed\Parser\MalformedXmlException $e) {
+    } catch (PicoFeed\Parser\MalformedXmlException $e) {
         $error_message = t('Feed is malformed.');
-    }
-    catch (PicoFeed\Reader\SubscriptionNotFoundException $e) {
+    } catch (PicoFeed\Reader\SubscriptionNotFoundException $e) {
         $error_message = t('Unable to find a subscription.');
-    }
-    catch (PicoFeed\Reader\UnsupportedFeedFormatException $e) {
+    } catch (PicoFeed\Reader\UnsupportedFeedFormatException $e) {
         $error_message = t('Unable to detect the feed format.');
     }
 
@@ -227,8 +208,7 @@ Router\action('subscribe', function() {
     if (isset($feed_id) && $feed_id !== false) {
         Session\flash(t('Subscription added successfully.'));
         Response\redirect('?action=feed-items&feed_id='.$feed_id);
-    }
-    else {
+    } else {
         if (! isset($error_message)) {
             $error_message = t('Error occured.');
         }
@@ -246,15 +226,13 @@ Router\action('subscribe', function() {
 });
 
 // OPML export
-Router\get_action('export', function() {
-
+Router\get_action('export', function () {
     Response\force_download('feeds.opml');
     Response\xml(Model\Feed\export_opml());
 });
 
 // OPML import form
-Router\get_action('import', function() {
-
+Router\get_action('import', function () {
     Response\html(Template\layout('import', array(
         'errors' => array(),
         'nb_unread_items' => Model\Item\count_by_status('unread'),
@@ -264,16 +242,13 @@ Router\get_action('import', function() {
 });
 
 // OPML importation
-Router\post_action('import', function() {
-
-    if (Model\Feed\import_opml(Request\file_content('file'))) {
-
+Router\post_action('import', function () {
+    try {
+        Model\Feed\import_opml(Request\file_content('file'));
         Session\flash(t('Your feeds have been imported.'));
         Response\redirect('?action=feeds');
-    }
-    else {
-
-        Session\flash_error(t('Unable to import your OPML file.'));
+    } catch (MalformedXmlException $e) {
+        Session\flash_error(t('Unable to import your OPML file.').' ('.$e->getMessage().')');
         Response\redirect('?action=import');
     }
 });
