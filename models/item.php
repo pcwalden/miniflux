@@ -64,6 +64,45 @@ function get_all_since($timestamp)
         ->findAll();
 }
 
+function search_all($text, $offset = null, $limit = null)
+{
+    return Database::getInstance('db')
+        ->table('items')
+        ->columns(
+            'items.id',
+            'items.title',
+            'items.updated',
+            'items.url',
+            'items.enclosure',
+            'items.enclosure_type',
+            'items.bookmark',
+            'items.feed_id',
+            'items.status',
+            'items.content',
+            'items.language',
+            'items.author',
+            'feeds.site_url',
+            'feeds.title AS feed_title',
+            'feeds.rtl'
+        )
+        ->join('feeds', 'id', 'feed_id')
+        ->neq('status', 'removed')
+        ->ilike('items.title', '%' . $text . '%')
+        ->orderBy('updated', 'desc')
+        ->offset($offset)
+        ->limit($limit)
+        ->findAll();
+}
+
+function count_by_search($text)
+{
+    return Database::getInstance('db')
+        ->table('items')
+        ->neq('status', 'removed')
+        ->ilike('title', '%' . $text . '%')
+        ->count();
+}
+
 function get_latest_feeds_items()
 {
     return Database::getInstance('db')
@@ -244,7 +283,7 @@ function get_nav($item, $status = array('unread'), $bookmark = array(1, 0), $fee
     $next_item = null;
     $previous_item = null;
 
-    for ($i = 0, $ilen = count($items); $i < $ilen; $i++) {
+    for ($i = 0, $ilen = count($items); $i < $ilen; ++$i) {
         if ($items[$i]['id'] == $item['id']) {
             if ($i > 0) {
                 $j = $i - 1;
@@ -255,7 +294,7 @@ function get_nav($item, $status = array('unread'), $bookmark = array(1, 0), $fee
                         break;
                     }
 
-                    $j--;
+                    --$j;
                 }
             }
 
@@ -268,7 +307,7 @@ function get_nav($item, $status = array('unread'), $bookmark = array(1, 0), $fee
                         break;
                     }
 
-                    $j++;
+                    ++$j;
                 }
             }
 
