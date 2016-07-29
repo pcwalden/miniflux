@@ -85,6 +85,46 @@ $server->register('group.list', function () {
     return Model\Group\get_all();
 });
 
+// Add a new group
+$server->register('group.create', function($title) {
+    return Model\Group\create($title);
+});
+
+// Get assoc array of group ids with assigned feeds ids
+$server->register('group.map', function() {
+    return Model\Group\get_map();
+});
+
+// Get the id of a group
+$server->register('group.id', function($title) {
+    return Model\Group\get_group_id($title);
+});
+
+// Get all feed ids assigned to a group
+$server->register('group.feeds', function($group_id) {
+    return Model\Group\get_feeds_by_group($group_id);
+});
+
+// Add groups to feed
+$server->register('group.add', function($feed_id, $group_ids) {
+    return Model\Group\add($feed_id, $group_ids);
+});
+
+// Remove groups from feed
+$server->register('group.remove', function($feed_id, $group_ids) {
+    return Model\Group\remove($feed_id, $group_ids);
+});
+
+// Remove all groups from feed
+$server->register('group.remove_all', function($feed_id) {
+    return Model\Group\remove_all($feed_id);
+});
+
+// Update feed group associations
+$server->register('group.update_feed_groups', function($feed_id, $group_ids, $create_group = '') {
+    return Model\Group\update_feed_groups($feed_id, $group_ids, $create_group);
+});
+
 // Get all items for a specific feed
 $server->register('item.feed.list', function ($feed_id, $offset = null, $limit = null) {
     return Model\Item\get_all_by_feed($feed_id, $offset, $limit);
