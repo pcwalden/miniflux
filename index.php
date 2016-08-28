@@ -1,10 +1,23 @@
 <?php
 
-require __DIR__.'/common.php';
+require __DIR__.'/app/common.php';
 
-Router\bootstrap(__DIR__.'/controllers', 'common', 'console', 'user', 'config', 'item', 'history', 'bookmark', 'feed', 'search');
+use Miniflux\Router;
+use Miniflux\Response;
 
-// Page not found
+Router\bootstrap(
+    __DIR__.'/app/controllers',
+    'common',
+    'console',
+    'user',
+    'config',
+    'item',
+    'history',
+    'bookmark',
+    'feed',
+    'search'
+);
+
 Router\notfound(function() {
     Response\redirect('?action=unread');
 });

@@ -8,7 +8,8 @@ use PDOException;
 /**
  * Postgres Driver
  *
- * @author   Frederic Guillot
+ * @package PicoDb\Driver
+ * @author  Frederic Guillot
  */
 class Postgres extends Base
 {
@@ -18,7 +19,7 @@ class Postgres extends Base
      * @access protected
      * @var array
      */
-    protected $requiredAtttributes = array(
+    protected $requiredAttributes = array(
         'hostname',
         'username',
         'password',
@@ -168,5 +169,28 @@ class Postgres extends Base
     {
         $rq = $this->pdo->prepare('UPDATE '.$this->schemaTable.' SET version=?');
         $rq->execute(array($version));
+    }
+
+    /**
+     * Run EXPLAIN command
+     *
+     * @param  string $sql
+     * @param  array  $values
+     * @return array
+     */
+    public function explain($sql, array $values)
+    {
+        return $this->getConnection()->query('EXPLAIN (FORMAT YAML) '.$this->getSqlFromPreparedStatement($sql, $values))->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get database version
+     *
+     * @access public
+     * @return array
+     */
+    public function getDatabaseVersion()
+    {
+        return $this->getConnection()->query('SHOW server_version')->fetchColumn();
     }
 }

@@ -4,9 +4,11 @@
 common.php export-subst
 
 # git files
+.dockerignore export-ignore
 .gitattributes export-ignore
 .gitignore export-ignore
 .gitkeep export-ignore
+.github export-ignore
 
 # core
 data/*.sqlite export-ignore
@@ -28,5 +30,4 @@ vendor/bin/ export-ignore
 vendor/fguillot/picofeed/picofeed export-ignore
 
 # unittests
-phpunit.xml export-ignore
 **/tests/ export-ignore

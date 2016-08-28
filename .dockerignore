@@ -1,0 +1,8 @@
+.idea
+.git
+.gitignore
+.github
+.dockerignore
+.travis.yml
+tests
+scripts

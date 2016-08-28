@@ -1,6 +1,8 @@
 <?php
 
-require __DIR__.'/common.php';
+require __DIR__.'/app/common.php';
+
+use Miniflux\Model;
 
 if (php_sapi_name() === 'cli') {
     $options = getopt('', array(

@@ -1,6 +1,8 @@
 Miniflux - Minimalist News Reader
 =================================
 
+[![Build Status](https://travis-ci.org/miniflux/miniflux.svg?branch=master)](https://travis-ci.org/miniflux/miniflux)
+
 Miniflux is a minimalist and web-based RSS reader.
 
 Features
